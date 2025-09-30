@@ -298,7 +298,7 @@ include "header.php";
                 <!-- Search bar -->
                 <div class="mb-3">
                     <div class="input-group rounded" style="max-width: 400px;">
-                        <input type="search" id="patientSearch" class="form-control rounded" placeholder="patient id search" aria-label="Search" aria-describedby="search-addon" />
+                        <input type="search" id="patientSearch" class="form-control rounded" placeholder="search patient name or patient id" aria-label="Search" aria-describedby="search-addon" />
                         <span class="input-group-text border-0" id="search-addon" style="background: transparent;">
                             <i class="bi bi-search"></i>
                         </span>
@@ -312,7 +312,7 @@ include "header.php";
                                 <th>Name</th>
                                 <th>DOB</th>
                                 <th>Gender</th>
-                                <th>Contact</th>
+                                <th>Contact</th>    
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -338,7 +338,7 @@ include "header.php";
                                 }
                         ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($r['id']); ?></td>
+                                <td class="patient-id"><?php echo htmlspecialchars($r['id']); ?></td>
                                 <td class="patient-name"><?php echo htmlspecialchars($r['fullname']); ?></td>
                                 <td><?php echo htmlspecialchars($r['dob'] ?: 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($r['gender'] ?: 'N/A'); ?></td>
@@ -462,7 +462,7 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
     var personalInfo = `
         <p><strong>ID:</strong> ${patientData.id}</p>
         <p><strong>Name:</strong> ${patientData.fullname}</p>
-        <p><strong>DOB:</strong> ${patientData.dob || 'N/A'}</p>
+        <p><strong>Date Of Birth:</strong> ${patientData.dob || 'N/A'}</p>
         <p><strong>Gender:</strong> ${patientData.gender || 'N/A'}</p>
         <p><strong>Contact:</strong> ${patientData.contact || 'N/A'}</p>
         <p><strong>Address:</strong> ${patientData.address || 'N/A'}</p>
@@ -509,7 +509,7 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
     document.getElementById('medicalRecords').innerHTML = medicalRecords;
 });
 
-// Live search filter for patient names
+// Live search filter for patient names and IDs
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('patientSearch');
     const table = document.getElementById('patientsTable');
@@ -520,14 +520,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
         Array.from(rows).forEach(row => {
             const nameCell = row.querySelector('.patient-name');
+            const idCell = row.querySelector('.patient-id');
+            let showRow = false;
+
             if (nameCell) {
                 const nameText = nameCell.textContent.toLowerCase();
                 if (nameText.indexOf(filter) > -1) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
+                    showRow = true;
                 }
             }
+
+            if (idCell) {
+                const idText = idCell.textContent.toLowerCase();
+                if (idText.indexOf(filter) > -1) {
+                    showRow = true;
+                }
+            }
+
+            row.style.display = showRow ? '' : 'none';
         });
     });
 });
