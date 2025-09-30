@@ -125,6 +125,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       }
     }
 
+    /* Media query for larger screens */
+    @media (min-width: 769px) {
+      .col-md-5 {
+        max-width: 60%; /* Adjust for better viewing on larger devices */
+      }
+    }
+
     .card {
       /* background: rgba(0,0,0, 0.1); 
       backdrop-filter: blur(8px);          
@@ -257,28 +264,71 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     .mt-2 {
       margin-top: 0.5rem !important; /* mt-2 */
     }
-    .nav{
-      display:flex;
-      flex-direction:row;
+    .nav {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 1rem 2rem;
+      margin: 1rem auto;
       justify-content:center;
-      padding-right:100px;
-      padding-top:0;
-      margin-top:0;
-      height:120px;
-      width: 92vw;
-      border-radius:30px;
-      margin:10px;
-      background-color:#10b981;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.6);
-      transition:0.4s ease;
-      cursor:pointer;
+      height: 105px;
+      width: 95vw;
+      max-width: 1400px;
+      border-radius: 30px;
+      background-color: #10b981;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+      transition: all 0.4s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
-    .nav:hover{
-      margin:15px;
+    .nav::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    .nav:hover::before {
+      left: 100%;
+    }
+    .nav:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.8);
+    }
+    .nav img {
+      height: 80px;
+      width: auto;
+      margin-right: 2rem;
+      transition: transform 0.3s ease;
+      z-index: 1;
+    }
+    .nav img:hover {
+      transform: scale(1.05);
+    }
+    @media (max-width: 768px) {
+      .nav {
+        flex-direction: column;
+        height: auto;
+        padding: 1rem;
+      }
+      .nav img {
+        margin-right: 0;
+        margin-bottom: 1rem;
+      }
+      .text h2 {
+        font-size: 1.2rem;
+      }
+      .text h3 {
+        font-size: 0.9rem;
+      }
     }
     .text{
-      padding-top:30px;
-      font-family:sans;
+      padding-top:3rem;
+      
       display:flex;
       flex-direction:column;
       color:white;
@@ -327,16 +377,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     strong{
       color:#dbd6d6ff !important;
     }
+    .nav-content{
+      display:flex;
+      flex-direction:row;
+
+    }
     
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
   <div class="nav">
+    <div class="nav-content">
     
-    <img src="IMAGES/main_project.png" alt="OCT_alternate_img" style="height: 150px; width: 200px; margin-right:50px; margin-left:30px;">
-    <div class="text">
-        <h2>OLVAREZ COLLEGE TAGAYTAY <br><h3>College of Nursing and Health-Related Sciences</h3></h2>
+      <img src="IMAGES/OCT_LOGO.png" alt="OCT_alternate_img" style="height: 150px; width: 200px; margin-right:20px; margin-left:30px;">
+      <div class="text">
+          <h2 style="padding-left:40px; border-bottom:0.2px solid black;">OLVAREZ COLLEGE TAGAYTAY <br><h3>College of Nursing and Health-Related Sciences</h3></h2>
+      </div>
+      <img src="IMAGES/NURSING_LOGO.png" alt="OCT_alternate_img" style="height: 150px; width: 200px; margin-right:20px; margin-left:30px;">
     </div>
   </div>    
   <div class="main_contaier">
@@ -345,7 +403,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <div class="header_container">
           <h1>Mision</h1>
         </div>
-        <h2 class="content_cotainer">Automated Unified Records for Optimized Retrieval and Archiving (AURORA's mission is to revolutionize healthcare documentation through seamless record integration, rapid and reliable data retrieval, and uncompromising data security-enabling healthcare professionals to focus on what matters most: delivering quality, compassionate, and efficient care.</h2>
+        <h2 class="content_cotainer">Automated Unified Records for Optimized Retrieval and Archiving AURORA's mission is to revolutionize healthcare documentation through seamless record integration, rapid and reliable data retrieval, and uncompromising data security-enabling healthcare professionals to focus on what matters most: delivering quality, compassionate, and efficient care.</h2>
       </div>
         
     </div>

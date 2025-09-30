@@ -1,6 +1,7 @@
 <?php
 $page_title = "Medical History";
 $msg = "";
+include "db.php";
 
 // Add history
 if (isset($_POST['add_history'])) {

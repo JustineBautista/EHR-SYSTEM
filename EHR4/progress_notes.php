@@ -2,6 +2,7 @@
 $page_title = "Progress Notes";
 $msg = "";
 $error = "";
+include "db.php";
 
 // Function to sanitize input
 function sanitize_input($conn, $data) {

@@ -2,6 +2,7 @@
 $page_title = "Treatment Plans";
 $msg = "";
 $error = "";
+include "db.php";
 
 // Function to sanitize input
 function sanitize_input($conn, $data) {

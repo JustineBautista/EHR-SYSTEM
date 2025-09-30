@@ -1,6 +1,7 @@
 <?php
 $page_title = "Medications";
 $msg = "";
+include "db.php";
 
 if (isset($_POST['add_med'])) {
     $pid = intval($_POST['patient_id']);

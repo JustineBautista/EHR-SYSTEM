@@ -2,6 +2,7 @@
 $page_title = "Diagnostics";
 $error = "";
 $success = "";
+include "db.php";
 
 // Sanitize function
 function sanitize_input($conn, $data) {

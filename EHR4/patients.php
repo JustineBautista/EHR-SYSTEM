@@ -295,8 +295,17 @@ include "header.php";
             <!-- Patient List -->
             <div class="card p-3">
                 <h6>Patient List</h6>
+                <!-- Search bar -->
+                <div class="mb-3">
+                    <div class="input-group rounded" style="max-width: 400px;">
+                        <input type="search" id="patientSearch" class="form-control rounded" placeholder="patient id search" aria-label="Search" aria-describedby="search-addon" />
+                        <span class="input-group-text border-0" id="search-addon" style="background: transparent;">
+                            <i class="bi bi-search"></i>
+                        </span>
+                    </div>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover" id="patientsTable">
                         <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
@@ -330,7 +339,7 @@ include "header.php";
                         ?>
                             <tr>
                                 <td><?php echo htmlspecialchars($r['id']); ?></td>
-                                <td><?php echo htmlspecialchars($r['fullname']); ?></td>
+                                <td class="patient-name"><?php echo htmlspecialchars($r['fullname']); ?></td>
                                 <td><?php echo htmlspecialchars($r['dob'] ?: 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($r['gender'] ?: 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($r['contact'] ?: 'N/A'); ?></td>
@@ -498,6 +507,29 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
     });
     
     document.getElementById('medicalRecords').innerHTML = medicalRecords;
+});
+
+// Live search filter for patient names
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('patientSearch');
+    const table = document.getElementById('patientsTable');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+    searchInput.addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+
+        Array.from(rows).forEach(row => {
+            const nameCell = row.querySelector('.patient-name');
+            if (nameCell) {
+                const nameText = nameCell.textContent.toLowerCase();
+                if (nameText.indexOf(filter) > -1) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
 });
 </script>
 
