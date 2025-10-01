@@ -708,9 +708,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           </button>
         </form>
 
-        <div class="access-info">
-          <i class="fa-solid fa-key"></i>Default Access: <strong>admin / admin123</strong>
-        </div>
       </div>
     </div>
 
