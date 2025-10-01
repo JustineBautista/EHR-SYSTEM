@@ -1,4 +1,4 @@
-<?php
+z`  <?php
 $page_title = "Progress Notes";
 $msg = "";
 $error = "";
@@ -14,10 +14,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_note'])) {
     $note = sanitize_input($conn, $_POST['note'] ?? "");
     $author = sanitize_input($conn, $_POST['author'] ?? "");
     $date = $_POST['date'] ?: date("Y-m-d H:i:s");
+    if (!empty($_POST['date'])) {
+        $date = str_replace('T', ' ', $date);
+    }
 
     // Validate date format if provided
-    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
-        $error = "Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
+    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2})?$/', $date)) {
+        $error = "Invalid date format. Use YYYY-MM-DDTHH:MM.";
     } else {
         $stmt = $conn->prepare("INSERT INTO progress_notes (patient_id, note, author, date_written) VALUES (?,?,?,?)");
         $stmt->bind_param("isss", $pid, $note, $author, $date);
@@ -158,7 +161,7 @@ include "header.php";
       </div>
       <div class="col-md-4">
         <label for="date" class="form-label">Date/Time</label>
-        <input id="date" class="form-control" name="date" placeholder="YYYY-MM-DD or YYYY-MM-DD HH:MM:SS">
+        <input type="datetime-local" id="date" class="form-control" name="date">
       </div>
       <div class="col-12">
         <label for="note" class="form-label">Progress Note</label>
@@ -234,7 +237,7 @@ include "header.php";
           </div>
           <div class="mb-3">
             <label for="edit_date" class="form-label">Date/Time</label>
-            <input type="text" class="form-control" name="edit_date" id="edit_date" placeholder="YYYY-MM-DD or YYYY-MM-DD HH:MM:SS" required>
+            <input type="datetime-local" id="edit_date" name="edit_date" class="form-control">
           </div>
           <div class="mb-3">
             <label for="edit_note" class="form-label">Progress Note</label>
@@ -261,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('edit_note_id').value = this.getAttribute('data-id');
       document.getElementById('edit_patient').value = this.getAttribute('data-patient');
       document.getElementById('edit_author').value = this.getAttribute('data-author');
-      document.getElementById('edit_date').value = this.getAttribute('data-date');
+      document.getElementById('edit_date').value = this.getAttribute('data-date').replace(' ', 'T');
       document.getElementById('edit_note').value = this.getAttribute('data-note');
       editModal.show();
     });
@@ -275,11 +278,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_edit'])) {
     $edit_id = intval($_POST['edit_note_id']);
     $edit_author = sanitize_input($conn, $_POST['edit_author'] ?? "");
     $edit_date = $_POST['edit_date'] ?: date("Y-m-d H:i:s");
+    if (!empty($_POST['edit_date'])) {
+        $edit_date = str_replace('T', ' ', $edit_date);
+    }
     $edit_note = sanitize_input($conn, $_POST['edit_note'] ?? "");
 
     // Validate date format if provided
-    if (!empty($_POST['edit_date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $edit_date)) {
-        $error = "Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
+    if (!empty($_POST['edit_date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2})?$/', $edit_date)) {
+        $error = "Invalid date format. Use YYYY-MM-DDTHH:MM.";
     } else {
         $stmt = $conn->prepare("UPDATE progress_notes SET author=?, date_written=?, note=? WHERE id=?");
         $stmt->bind_param("sssi", $edit_author, $edit_date, $edit_note, $edit_id);
