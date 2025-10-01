@@ -106,86 +106,214 @@ include "header.php";
 
 <style>
     :root {
-      --primary-color: #10b981;
-      --success-color: #10b981;
-      --warning-color: #f59e0b;
-      --danger-color: #ef4444;
+      --primary: #10b981;
+      --primary-light: #d1fae5;
+      --primary-dark: #059669;
+      --text-dark: #1f2937;
+      --text-light: #6b7280;
+      --border: #e5e7eb;
+      --bg-light: #f9fafb;
     }
 
     body {
-      background-color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       padding-top: 5rem;
+      color: var(--text-dark);
     }
     
+    .dashboard-header {
+      background: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dashboard-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin: 0;
+    }
+
     .card {
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      border: none;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: white;
+      margin-bottom: 1.5rem;
+      transition: box-shadow 0.2s;
     }
     
     .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--primary);
+      display: inline-block;
     }
     
     .stat-card {
-      border-left: 4px solid var(--primary-color);
+      padding: 1.5rem;
+      border-left: 4px solid var(--primary);
+      background: white;
+      height: 100%;
+    }
+
+    .stat-card:hover {
+      border-left-width: 5px;
     }
     
     .stat-value {
-      font-size: 1.75rem;
+      font-size: 2.5rem;
       font-weight: 700;
-      color: var(--primary-color);
-    }
-    
-    .module-btn {
-      height: 100px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-decoration: none;
-      color: #334155;
-      border-radius: 1rem;
-      background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: all 0.2s ease;
-    }
-    
-    .module-btn:hover {
-      background: linear-gradient(135deg, var(--warning-color), #e6a800);
-      color: black;
-      transform: translateY(-5px) scale(1.02);
-      box-shadow: 0 8px 16px rgba(245, 158, 11, 0.3);
-      text-decoration: none;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 0.5rem;
     }
 
-    .module-btn:hover .module-icon {
-      color: white;
-      transform: scale(1.1);
-      transition: transform 0.3s ease;
+    .stat-label {
+      color: var(--text-light);
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    
-    .module-icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-      color: var(--primary-color);
+
+    .stat-icon {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-light);
+      border-radius: 12px;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .action-card {
+      padding: 1.5rem;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.2s;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+      border-color: var(--primary);
+    }
+
+    .action-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .action-title {
+      font-weight: 600;
+      color: var(--text-dark);
+      margin: 0;
+    }
+
+    .chart-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
     }
 
     .alert {
-      border-radius: 0.75rem;
+      border-radius: 8px;
       border: none;
+      margin-bottom: 1.5rem;
     }
 
     .form-control:focus, .form-select:focus {
-      box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
-      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      border-color: var(--primary);
     }
     
     .btn {
-      border-radius: 0.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      padding: 0.625rem 1.25rem;
+      transition: all 0.2s;
+    }
+
+    .btn-success {
+      background: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .btn-success:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .btn-outline-success {
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      background: white;
+    }
+
+    .btn-outline-success:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .modal-content {
+      border-radius: 12px;
+      border: none;
+    }
+
+    .modal-header {
+      background: var(--primary);
+      color: white;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .input-group-text {
+      background: var(--bg-light);
+      border-right: none;
+      color: var(--text-light);
+    }
+
+    .form-control, .form-select {
+      border-left: none;
+    }
+
+    .input-group .form-control:focus,
+    .input-group .form-select:focus {
+      border-left: none;
+    }
+
+    .input-group:focus-within .input-group-text {
+      border-color: var(--primary);
+      color: var(--primary);
     }
 
 </style>
@@ -200,162 +328,92 @@ include "header.php";
   </div>
 <?php endif; ?>
 
-<div class="container mt-4">
-  <!-- Stats Overview -->
+<div class="container-fluid px-4 py-4">
+  <!-- Dashboard Header -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="card">
-        <div class="card-header py-3">
-          <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>EHR System Overview</h5>
+      <h1 class="dashboard-title">Dashboard Overview</h1>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-people-fill fs-3"></i>
         </div>
-        <div class="card-body">
-          <div class="row g-4">
-            <div class="col-md-3 col-sm-6">
-              <div class="card stat-card h-100">
-                <div class="card-body d-flex align-items-center">
-                  <div class="me-3 text-success"><i class="bi bi-people-fill fs-2"></i></div>
-                  <div>
-                    <div class="stat-value"><?php echo number_format($stats['patients']); ?></div>
-                    <div class="stat-label">Patients</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-              <div class="card stat-card h-100">
-                <div class="card-body d-flex align-items-center">
-                  <div class="me-3 text-success"><i class="bi bi-heart-pulse fs-2"></i></div>
-                  <div>
-                    <div class="stat-value"><?php echo number_format($stats['vitals']); ?></div>
-                    <div class="stat-label">Vital Records</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-              <div class="card stat-card h-100">
-                <div class="card-body d-flex align-items-center">
-                  <div class="me-3 text-success"><i class="bi bi-capsule fs-2"></i></div>
-                  <div>
-                    <div class="stat-value"><?php echo number_format($stats['medications']); ?></div>
-                    <div class="stat-label">Medications</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-              <div class="card stat-card h-100">
-                <div class="card-body d-flex align-items-center">
-                  <div class="me-3 text-success"><i class="bi bi-clipboard-data fs-2"></i></div>
-                  <div>
-                    <div class="stat-value"><?php echo number_format($stats['lab_results']); ?></div>
-                    <div class="stat-label">Lab Results</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="stat-value"><?php echo number_format($stats['patients']); ?></div>
+        <div class="stat-label">Total Patients</div>
       </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-heart-pulse fs-3"></i>
+        </div>
+        <div class="stat-value"><?php echo number_format($stats['vitals']); ?></div>
+        <div class="stat-label">Vital Records</div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-capsule fs-3"></i>
+        </div>
+        <div class="stat-value"><?php echo number_format($stats['medications']); ?></div>
+        <div class="stat-label">Medications</div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="bi bi-clipboard-data fs-3"></i>
+        </div>
+        <div class="stat-value"><?php echo number_format($stats['lab_results']); ?></div>
+        <div class="stat-label">Lab Results</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="section-title">Quick Actions</h2>
+    </div>
+  </div>
+
+  <div class="action-grid mb-4">
+    <div class="action-card" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+      <div class="action-icon">
+        <i class="bi bi-person-plus fs-4"></i>
+      </div>
+      <h3 class="action-title">Add New Patient</h3>
+    </div>
+    <a href="patients.php" class="action-card text-decoration-none">
+      <div class="action-icon">
+        <i class="bi bi-people fs-4"></i>
+      </div>
+      <h3 class="action-title">Manage Patients</h3>
+    </a>
+  </div>
+
+  <!-- Medical Summary Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="section-title">Medical Summary</h2>
     </div>
   </div>
 
   <div class="row g-4">
-    <!-- Quick Actions -->
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-header py-3">
-          <h5 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>Quick Actions</h5>
-        </div>
-        <div class="card-body">
-          <div class="d-grid gap-3">
-            <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addPatientModal">
-              <i class="bi bi-person-plus me-2"></i>Add New Patient
-            </button>
-            <a class="btn btn-outline-success w-100" href="patients.php">
-              <i class="bi bi-people me-2"></i>Manage Patients
-            </a>
-            <a class="btn btn-outline-success w-100" href="vitals.php">
-              <i class="bi bi-heart-pulse me-2"></i>Record Vital Signs
-            </a>
-            <a class="btn btn-outline-success w-100" href="lab_results.php">
-              <i class="bi bi-clipboard-data me-2"></i>Enter Lab Results
-            </a>
-            <a class="btn btn-outline-success w-100" href="medications.php">
-              <i class="bi bi-capsule me-2"></i>Manage Current Medications
-            </a>
-          </div>
-        </div>
+    <div class="col-lg-8">
+      <div class="chart-container">
+        <canvas id="medicalBarChart" style="max-height: 320px;"></canvas>
       </div>
     </div>
-
-    <!-- Modules -->
-    <div class="col-md-8">
-      <div class="card h-100">
-        <div class="card-header py-3">
-          <h5 class="mb-0"><i class="bi bi-grid-3x3-gap me-2"></i>EHR Modules</h5>
-        </div>
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-4 col-sm-6">
-              <a class="module-btn p-3 h-100 w-100 d-block" href="diagnostics.php">
-                <i class="bi bi-clipboard-check-fill module-icon"></i>
-                <span class="fw-semibold">Diagnostics</span>
-              </a>
-            </div>
-            <div class="col-md-4 col-sm-6">
-              <a class="module-btn p-3 h-100 w-100 d-block" href="treatment_plans.php">
-                <i class="bi bi-journal-text module-icon"></i>
-                <span class="fw-semibold">Treatment Plans</span>
-              </a>
-            </div>
-            <div class="col-md-4 col-sm-6">
-              <a class="module-btn p-3 h-100 w-100 d-block" href="lab_diagnostic_results.php">
-                <i class="bi bi-bar-chart-line-fill module-icon"></i>
-                <span class="fw-semibold">Lab & Diagnostic</span>
-              </a>
-            </div>
-            <div class="col-md-4 col-sm-6">
-              <a class="module-btn p-3 h-100 w-100 d-block" href="progress_notes.php">
-                <i class="bi bi-pencil-square module-icon"></i>
-                <span class="fw-semibold">Progress Notes</span>
-              </a>
-            </div>
-            <div class="col-md-4 col-sm-6">
-              <a class="module-btn p-3 h-100 w-100 d-block" href="medical_history.php">
-                <i class="bi bi-journal-medical module-icon"></i>
-                <span class="fw-semibold">Medical History</span>
-              </a>
-            </div>
-            <div class="col-md-4 col-sm-6">
-              <a class="module-btn p-3 h-100 w-100 d-block" href="lab_results.php">
-                <i class="bi bi-clipboard-data module-icon"></i>
-                <span class="fw-semibold">Lab Results</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Medical Summary Charts - Centered Bottom -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card text-center">
-        <div class="card-header py-3">
-          <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Medical Summary</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-8 mx-auto">
-              <canvas id="medicalBarChart" height="300"></canvas>
-            </div>
-            <div class="col-md-4 mx-auto">
-              <canvas id="medicalDonutChart" height="300"></canvas>
-            </div>
-          </div>
-        </div>
+    <div class="col-lg-4">
+      <div class="chart-container">
+        <canvas id="medicalDonutChart" style="max-height: 320px;"></canvas>
       </div>
     </div>
   </div>
@@ -364,8 +422,8 @@ include "header.php";
 <!-- Add Patient Modal -->
 <div class="modal fade" id="addPatientModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content rounded-4">
-      <div class="modal-header bg-success text-white">
+    <div class="modal-content">
+      <div class="modal-header">
         <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add New Patient</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
@@ -373,22 +431,22 @@ include "header.php";
         <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
         <div class="modal-body p-4">
           <div class="row g-3">
-            <div class="col-md-12">
-              <label for="name" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+            <div class="col-12">
+              <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-person"></i></span>
                 <input type="text" class="form-control" id="name" name="name" required maxlength="100" placeholder="Enter patient's full name">
               </div>
             </div>
             <div class="col-md-6">
-              <label for="dob" class="form-label fw-semibold">Date of Birth</label>
+              <label for="dob" class="form-label">Date of Birth</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                 <input type="date" class="form-control" id="dob" name="dob" max="<?php echo date('Y-m-d'); ?>">
               </div>
             </div>
             <div class="col-md-6">
-              <label for="gender" class="form-label fw-semibold">Gender</label>
+              <label for="gender" class="form-label">Gender</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
                 <select class="form-select" id="gender" name="gender">
@@ -399,22 +457,22 @@ include "header.php";
                 </select>
               </div>
             </div>
-            <div class="col-md-12">
-              <label for="contact" class="form-label fw-semibold">Contact</label>
+            <div class="col-12">
+              <label for="contact" class="form-label">Contact</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-telephone"></i></span>
                 <input type="tel" class="form-control" id="contact" name="contact" maxlength="20" placeholder="Phone number">
               </div>
             </div>
-            <div class="col-md-12">
-              <label for="address" class="form-label fw-semibold">Address</label>
+            <div class="col-12">
+              <label for="address" class="form-label">Address</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
                 <textarea class="form-control" id="address" name="address" rows="2" maxlength="500" placeholder="Patient's address"></textarea>
               </div>
             </div>
-            <div class="col-md-12">
-              <label for="history" class="form-label fw-semibold">Medical History</label>
+            <div class="col-12">
+              <label for="history" class="form-label">Medical History</label>
               <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-journal-medical"></i></span>
                 <textarea class="form-control" id="history" name="history" rows="3" maxlength="1000" placeholder="Brief medical history (optional)"></textarea>
@@ -435,7 +493,6 @@ include "header.php";
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Auto-dismiss alerts and basic form validation
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-dismiss alerts after 5 seconds
     setTimeout(function() {
@@ -491,42 +548,37 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     const totalRecords = data.reduce((a, b) => a + b, 0);
 
-    // Bar Chart with Line Overlay (Statistical Line)
+    // Bar Chart
     const barCtx = document.getElementById('medicalBarChart').getContext('2d');
     new Chart(barCtx, {
         data: {
             labels: labels,
             datasets: [{
                 type: 'bar',
-                label: 'Record Counts',
+                label: 'Records',
                 data: data,
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(5, 150, 105, 0.8)',
-                    'rgba(4, 120, 87, 0.8)',
-                    'rgba(6, 95, 70, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(217, 119, 6, 0.8)',
-                    'rgba(180, 83, 9, 0.8)',
-                    'rgba(146, 64, 14, 0.8)'
-                ],
-                borderColor: '#ffffff',
-                borderWidth: 1
+                backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 1,
+                borderRadius: 6
             }, {
                 type: 'line',
-                label: 'Trend Line',
-                data: data.map((d, i) => data.slice(0, i+1).reduce((a, b) => a + b, 0)), // Cumulative for statistical trend
+                label: 'Cumulative',
+                data: data.map((d, i) => data.slice(0, i+1).reduce((a, b) => a + b, 0)),
                 borderColor: '#ef4444',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                backgroundColor: 'rgba(239, 68, 68, 0.05)',
                 borderWidth: 2,
-                fill: false,
-                tension: 0.4,
-                yAxisID: 'y'
+                fill: true,
+                tension: 0.3,
+                pointRadius: 4,
+                pointBackgroundColor: '#ef4444',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
             interaction: {
                 mode: 'index',
                 intersect: false
@@ -534,29 +586,52 @@ document.addEventListener('DOMContentLoaded', function() {
             plugins: {
                 legend: {
                     display: true,
-                    position: 'top'
+                    position: 'top',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true,
+                        font: {
+                            size: 12,
+                            weight: '500'
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 10
+                        }
+                    },
+                    grid: {
+                        display: false
                     }
                 }
             }
         }
     });
 
-    // Donut Chart for Distribution
+    // Donut Chart
     const donutCtx = document.getElementById('medicalDonutChart').getContext('2d');
-    const donutData = data.map(d => (d / totalRecords * 100).toFixed(1));
     new Chart(donutCtx, {
         type: 'doughnut',
         data: {
             labels: labels,
             datasets: [{
-                data: donutData,
+                data: data,
                 backgroundColor: [
                     '#10b981',
                     '#059669',
@@ -567,16 +642,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     '#b45309',
                     '#92400e'
                 ],
-                borderWidth: 2,
+                borderWidth: 3,
                 borderColor: '#ffffff'
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
             plugins: {
                 legend: {
-                    position: 'right'
+                    position: 'bottom',
+                    labels: {
+                        padding: 10,
+                        usePointStyle: true,
+                        font: {
+                            size: 10
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed || 0;
+                            const percentage = totalRecords > 0 ? ((value / totalRecords) * 100).toFixed(1) : 0;
+                            return context.label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
                 }
             }
         }
