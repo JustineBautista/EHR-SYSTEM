@@ -39,7 +39,7 @@ require_once 'db.php';
         }
 
         .navbar {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.8), rgba(34, 197, 94, 0.8));
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
