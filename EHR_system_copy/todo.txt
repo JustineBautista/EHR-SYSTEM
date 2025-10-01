@@ -1,3 +1,0 @@
-EHR-SYSTEM
-
-hello,world
