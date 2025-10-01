@@ -72,14 +72,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
-      min-height: 100vh;
+      background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #e0e7ff 100%);
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
-    /* Animated background */
+    /* Animated background particles */
     body::before {
       content: '';
       position: fixed;
@@ -88,27 +88,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       width: 100%;
       height: 100%;
       background: 
-        radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.2) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(52, 211, 153, 0.2) 0%, transparent 50%);
-      animation: pulse 8s ease-in-out infinite;
+        radial-gradient(circle at 20% 30%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(52, 211, 153, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(5, 150, 105, 0.05) 0%, transparent 50%);
+      animation: pulse 10s ease-in-out infinite;
       z-index: 0;
     }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
+      50% { opacity: 0.7; }
     }
 
     /* Header */
     .header {
-      background: rgba(13, 138, 2, 0.98);
-      backdrop-filter: blur(10px);
-      padding: 1.5rem 2rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      padding: 1.25rem 2rem;
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
       position: relative;
       z-index: 10;
-      animation: slideDown 0.6s ease-out;
-      
+      animation: slideDown 0.8s ease-out;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     @keyframes slideDown {
@@ -126,39 +143,65 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 2rem;
+      gap: 3rem;
       max-width: 1400px;
       margin: 0 auto;
       flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-logo-wrapper {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 0.75rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      transition: all 0.4s ease;
+      border: 3px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .header-logo-wrapper:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.8);
     }
 
     .header-logo {
-      height: 80px;
+      height: 70px;
       width: auto;
-      transition: transform 0.3s ease;
-    }
-
-    .header-logo:hover {
-      transform: scale(1.05) rotate(2deg);
+      display: block;
     }
 
     .header-text {
       text-align: center;
       flex: 1;
       min-width: 300px;
+      padding: 1rem;
     }
 
     .header-text h1 {
-      font-size: 1.8rem;
-      color: #ffffffff;
+      font-size: 1.6rem;
+      color: white;
       margin-bottom: 0.5rem;
-      font-weight: 700;
+      font-weight: 800;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .header-divider {
+      width: 80%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+      margin: 0.5rem auto;
     }
 
     .header-text h2 {
-      font-size: 1rem;
-      color: #10b981;
-      font-weight: 500;
+      font-size: 0.9rem;
+      color: #d1fae5;
+      font-weight: 600;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.15);
+      letter-spacing: 0.3px;
     }
 
     /* Main Container */
@@ -167,11 +210,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem;
+      padding: 1.5rem 2rem;
       gap: 2rem;
       position: relative;
       z-index: 1;
-      animation: fadeIn 0.8s ease-out;
+      animation: fadeIn 1s ease-out;
+      overflow-y: auto;
+      max-height: calc(100vh - 140px);
     }
 
     @keyframes fadeIn {
@@ -181,181 +226,239 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     /* Side Cards */
     .info-card {
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(10px);
+      background: white;
       border-radius: 24px;
-      padding: 2rem;
-      max-width: 350px;
-      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
-      transition: all 0.4s ease;
-      animation: slideIn 0.8s ease-out;
-      border: 1px solid rgba(16, 185, 129, 0.1);
+      padding: 0;
+      max-width: 320px;
+      box-shadow: 0 10px 40px rgba(16, 185, 129, 0.15);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: slideIn 1s ease-out;
+      border: 2px solid rgba(16, 185, 129, 0.1);
+      overflow: hidden;
+      flex-shrink: 0;
     }
 
     .info-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 48px rgba(16, 185, 129, 0.3);
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 16px 50px rgba(16, 185, 129, 0.25);
+      border-color: rgba(16, 185, 129, 0.3);
     }
 
     @keyframes slideIn {
       from {
         opacity: 0;
-        transform: translateX(-50px);
+        transform: translateX(-80px) translateY(20px);
       }
       to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) translateY(0);
       }
     }
 
     .info-card:last-of-type {
-      animation: slideInRight 0.8s ease-out;
+      animation: slideInRight 1s ease-out;
     }
 
     @keyframes slideInRight {
       from {
         opacity: 0;
-        transform: translateX(50px);
+        transform: translateX(80px) translateY(20px);
       }
       to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) translateY(0);
       }
     }
 
     .info-card-header {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      margin: -2rem -2rem 1.5rem -2rem;
-      padding: 1.5rem;
-      border-radius: 24px 24px 0 0;
+      padding: 1.25rem;
       text-align: center;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .info-card-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
     }
 
     .info-card-header h3 {
       color: white;
-      font-size: 1.5rem;
-      font-weight: 600;
+      font-size: 1.4rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      position: relative;
+      z-index: 1;
     }
 
     .info-card-content {
+      padding: 1.25rem;
       color: #374151;
-      line-height: 1.7;
+      line-height: 1.6;
       text-align: justify;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
     }
 
     /* Login Card */
     .login-container {
       width: 100%;
-      max-width: 450px;
-      animation: scaleIn 0.6s ease-out;
+      max-width: 420px;
+      animation: scaleIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      flex-shrink: 0;
     }
 
     @keyframes scaleIn {
       from {
         opacity: 0;
-        transform: scale(0.9);
+        transform: scale(0.85) translateY(30px);
       }
       to {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1) translateY(0);
       }
     }
 
     .login-card {
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(10px);
+      background: white;
       border-radius: 28px;
-      padding: 3rem;
-      box-shadow: 0 12px 48px rgba(16, 185, 129, 0.25);
+      padding: 2.5rem;
+      box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
       transition: all 0.4s ease;
-      border: 1px solid rgba(16, 185, 129, 0.1);
+      border: 2px solid rgba(16, 185, 129, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+      background-size: 200% 100%;
+      animation: gradientMove 3s ease infinite;
+    }
+
+    @keyframes gradientMove {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
 
     .login-card:hover {
-      box-shadow: 0 16px 64px rgba(16, 185, 129, 0.35);
+      box-shadow: 0 25px 80px rgba(16, 185, 129, 0.3);
+      border-color: rgba(16, 185, 129, 0.3);
     }
 
     .login-logo {
       display: block;
-      margin: 0 auto 2rem;
-      height: 120px;
+      margin: 0 auto 1.5rem;
+      height: 100px;
       width: auto;
-      filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3));
-      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 6px 16px rgba(16, 185, 129, 0.4));
+      animation: float 4s ease-in-out infinite;
     }
 
     @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-8px) rotate(1deg); }
+      75% { transform: translateY(-8px) rotate(-1deg); }
     }
 
     .login-title {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
 
     .login-title h2 {
-      font-size: 1.8rem;
-      color: #1f2937;
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 0.5rem;
-      font-weight: 700;
+      font-weight: 800;
     }
 
     .login-title p {
       color: #6b7280;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     /* Alert */
     .alert-danger {
       background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
       color: #991b1b;
-      padding: 1rem;
-      border-radius: 12px;
-      margin-bottom: 1.5rem;
+      padding: 0.9rem;
+      border-radius: 14px;
+      margin-bottom: 1.25rem;
       border-left: 4px solid #dc2626;
-      animation: shake 0.5s ease-in-out;
+      animation: shake 0.6s ease-in-out;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+      font-size: 0.9rem;
     }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      75% { transform: translateX(10px); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+      20%, 40%, 60%, 80% { transform: translateX(8px); }
     }
 
     /* Form */
     .form-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #374151;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .input-wrapper {
       position: relative;
     }
 
     .form-group i {
       position: absolute;
-      left: 1.2rem;
+      left: 1.1rem;
       top: 50%;
       transform: translateY(-50%);
       color: #9ca3af;
-      font-size: 1.1rem;
+      font-size: 1rem;
       transition: all 0.3s ease;
       z-index: 1;
     }
 
     .form-control {
       width: 100%;
-      padding: 1rem 1rem 1rem 3.2rem;
-      font-size: 1rem;
+      padding: 0.9rem 1rem 0.9rem 3rem;
+      font-size: 0.95rem;
       border: 2px solid #e5e7eb;
       border-radius: 14px;
       background: #f9fafb;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       font-family: inherit;
     }
 
@@ -363,24 +466,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       outline: none;
       border-color: #10b981;
       background: white;
-      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
+      transform: translateY(-2px);
     }
 
     .form-control:focus + i {
       color: #10b981;
-    }
-
-    .form-group:has(.form-control:focus) i {
-      color: #10b981;
-      transform: translateY(-50%) scale(1.1);
+      transform: translateY(-50%) scale(1.15);
     }
 
     /* Button */
     .btn {
       width: 100%;
       padding: 1rem;
-      font-size: 1.1rem;
-      font-weight: 600;
+      font-size: 1rem;
+      font-weight: 700;
       color: white;
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       border: none;
@@ -388,10 +488,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       cursor: pointer;
       transition: all 0.3s ease;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+      margin-top: 0.25rem;
     }
 
     .btn::before {
@@ -402,96 +503,137 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       width: 0;
       height: 0;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.3);
       transform: translate(-50%, -50%);
       transition: width 0.6s, height 0.6s;
     }
 
     .btn:hover::before {
-      width: 300px;
-      height: 300px;
+      width: 400px;
+      height: 400px;
     }
 
     .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(16, 185, 129, 0.5);
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
     }
 
     .btn:active {
-      transform: translateY(0);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn span {
+      position: relative;
+      z-index: 1;
     }
 
     /* Access Info */
     .access-info {
       text-align: center;
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-      border-radius: 12px;
-      font-size: 0.9rem;
+      margin-top: 1.25rem;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-radius: 14px;
+      font-size: 0.85rem;
       color: #065f46;
-      border: 1px solid #bbf7d0;
+      border: 2px solid #a7f3d0;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
     }
 
     .access-info strong {
       color: #10b981;
-      font-weight: 700;
+      font-weight: 800;
+      font-size: 0.9rem;
     }
 
     .access-info i {
       color: #10b981;
       margin-right: 0.5rem;
+      font-size: 1rem;
+    }
+
+    /* Footer Decorative Element */
+    .decorative-footer {
+      display: none;
     }
 
     /* Responsive Design */
     @media (max-width: 1200px) {
       .main-container {
         flex-direction: column;
+        padding: 2rem 1.5rem;
       }
 
       .info-card {
         max-width: 100%;
+        width: 100%;
       }
     }
 
     @media (max-width: 768px) {
+      .header {
+        padding: 1.5rem 1rem;
+      }
+
       .header-content {
-        gap: 1rem;
+        gap: 1.5rem;
+      }
+
+      .header-logo-wrapper {
+        padding: 0.75rem;
       }
 
       .header-logo {
-        height: 60px;
+        height: 70px;
       }
 
       .header-text h1 {
-        font-size: 1.3rem;
+        font-size: 1.5rem;
       }
 
       .header-text h2 {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
       }
 
       .login-card {
-        padding: 2rem;
+        padding: 2.5rem 2rem;
       }
 
-      .info-card {
+      .info-card-content {
         padding: 1.5rem;
       }
 
       .info-card-header {
-        margin: -1.5rem -1.5rem 1rem -1.5rem;
+        padding: 1.5rem;
+      }
+
+      .info-card-header h3 {
+        font-size: 1.4rem;
       }
     }
 
     @media (max-width: 480px) {
       .main-container {
-        padding: 1rem;
+        padding: 1.5rem 1rem;
+        gap: 1.5rem;
       }
 
       .login-card {
-        padding: 1.5rem;
+        padding: 2rem 1.5rem;
+      }
+
+      .header-text h1 {
+        font-size: 1.2rem;
+      }
+
+      .header-text h2 {
+        font-size: 0.8rem;
+      }
+
+      .login-title h2 {
+        font-size: 1.6rem;
       }
     }
   </style>
@@ -501,12 +643,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <!-- Header -->
   <header class="header">
     <div class="header-content">
-      <img src="IMAGES/OCT_LOGO.png" alt="Olvarez College Tagaytay Logo" class="header-logo">
+      <div class="header-logo-wrapper">
+        <img src="IMAGES/OCT_LOGO.png" alt="Olvarez College Tagaytay Logo" class="header-logo">
+      </div>
       <div class="header-text">
         <h1>OLVAREZ COLLEGE TAGAYTAY</h1>
+        <div class="header-divider"></div>
         <h2>College of Nursing and Health-Related Sciences</h2>
       </div>
-      <img src="IMAGES/NURSING_LOGO.png" alt="Nursing Department Logo" class="header-logo">
+      <div class="header-logo-wrapper">
+        <img src="IMAGES/NURSING_LOGO.png" alt="Nursing Department Logo" class="header-logo">
+      </div>
     </div>
   </header>
 
@@ -541,13 +688,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <form method="post">
           <div class="form-group">
-            <input type="text" class="form-control" name="username" placeholder="Username" required>
-            <i class="fa-solid fa-user"></i>
+            <label for="username" class="form-label">Username</label>
+            <div class="input-wrapper">
+              <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required autocomplete="username">
+              <i class="fa-solid fa-user"></i>
+            </div>
           </div>
 
           <div class="form-group">
-            <input type="password" class="form-control" name="password" placeholder="Password" required>
-            <i class="fa-solid fa-lock"></i>
+            <label for="password" class="form-label">Password</label>
+            <div class="input-wrapper">
+              <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+              <i class="fa-solid fa-lock"></i>
+            </div>
           </div>
 
           <button type="submit" class="btn">
@@ -556,7 +709,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </form>
 
         <div class="access-info">
-          <i class="fa-solid fa-key"></i>Access Passcode: <strong>admin / admin123</strong>
+          <i class="fa-solid fa-key"></i>Default Access: <strong>admin / admin123</strong>
         </div>
       </div>
     </div>
@@ -571,5 +724,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       </div>
     </div>
   </main>
+
+  <!-- Decorative Footer -->
+  <footer class="decorative-footer">
+    <p>Secure Electronic Health Records System</p>
+  </footer>
 </body>
 </html>
