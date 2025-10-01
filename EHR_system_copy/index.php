@@ -58,390 +58,518 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>EHR Admin Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURORA - EHR Admin Login</title>
   <style>
-    /* Natural CSS Equivalent of Bootstrap Styles */
-    body {
-      padding:0;
-      margin:0;
-      display: flex;
-      flex-direction:column;
-      font-family: cambria;
-      background-color:#dbd6d6ff; /* bg-light */
-      justify-content:center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 205px; /* Standard container width */
-      margin-left: 220px;
-      margin-right: auto;
-      padding-left: 15px;
-      padding-right: 15px;
-      padding-top:3rem;
-      z-index:1000;
-    }
-
-    /* Media query for tablets and smaller screens */
-    @media (max-width: 992px) {
-      .container {
-        margin-left: auto;
-        margin-right: auto;
-        max-width: none;
-      }
-    }
-
-    /* Media query for mobile devices */
-    @media (max-width: 768px) {
-      .container {
-        margin-left: auto;
-        margin-right: auto;
-        padding-left: 10px;
-        padding-right: 10px;
-        padding-top: 1rem;
-      }
-    }
-
-    .row {
-      
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center; /* justify-content-center */
-    }
-
-    .col-md-5 {
-      flex: 0 0 auto;
-      width: 100%;
-      max-width: 41.666667%; /* col-md-5 is 5/12 or ~41.66% of the grid */
-    }
-    
-    /* Media query for smaller screens (like md breakpoint in BS) */
-    @media (max-width: 768px) {
-      .col-md-5 {
-        max-width: 90%; /* Adjust for better  viewing on smaller devices */
-      }
-    }
-
-    /* Media query for larger screens */
-    @media (min-width: 769px) {
-      .col-md-5 {
-        max-width: 60%; /* Adjust for better viewing on larger devices */
-      }
-    }
-
-    .card {
-      /* background: rgba(0,0,0, 0.1); 
-      backdrop-filter: blur(8px);          
-      -webkit-backdrop-filter: blur(8px);   */
-      background-color: #10b981;
-      width: 500px;
-      border: 1px solid rgba(0, 0, 0, 0.125);
-      border-radius: 2.25rem; /* Standard border-radius */
-      transition:0.5s ease;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.9);
-    }
-    .card:hover{
-      margin-left:10px;
-    }
-
-    .card-body {
-      
-      padding: 1.5rem; /* Padding inside the card */
-    }
-
-    .card-title {
-      margin-bottom: 1rem; /* mb-3 */
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: 500;
-      padding-bottom:0px;
-    }
-
-    .alert-danger {
-      padding: 0.75rem 1.25rem;
-      margin-bottom: 1rem;
-      color: #721c24; /* Red text */
-      background-color: #f8d7da; /* Light red background */
-      border: 1px solid #f5c6cb; /* Red border */
-      border-radius: 0.25rem;
-    }
-
-    .mb-3 {
-      display:flex;
-      flex-direction:row;
-      margin-bottom: 1rem !important; /* mb-3 equivalent */
-      position: relative;
-    }
-
-    .mb-3 i {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 1;
-      color: #495057;
+    * {
+      box-sizing: border-box;
+      margin: 0;
       padding: 0;
     }
 
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
 
-    .form-label {
-      display: inline-block;
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(52, 211, 153, 0.2) 0%, transparent 50%);
+      animation: pulse 8s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    /* Header */
+    .header {
+      background: rgba(13, 138, 2, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 10;
+      animation: slideDown 0.6s ease-out;
+      
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      flex-wrap: wrap;
+    }
+
+    .header-logo {
+      height: 80px;
+      width: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .header-logo:hover {
+      transform: scale(1.05) rotate(2deg);
+    }
+
+    .header-text {
+      text-align: center;
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .header-text h1 {
+      font-size: 1.8rem;
+      color: #ffffffff;
       margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .header-text h2 {
+      font-size: 1rem;
+      color: #10b981;
+      font-weight: 500;
+    }
+
+    /* Main Container */
+    .main-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      gap: 2rem;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Side Cards */
+    .info-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 2rem;
+      max-width: 350px;
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+      transition: all 0.4s ease;
+      animation: slideIn 0.8s ease-out;
+      border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .info-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 48px rgba(16, 185, 129, 0.3);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .info-card:last-of-type {
+      animation: slideInRight 0.8s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .info-card-header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      margin: -2rem -2rem 1.5rem -2rem;
+      padding: 1.5rem;
+      border-radius: 24px 24px 0 0;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .info-card-header h3 {
+      color: white;
+      font-size: 1.5rem;
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-card-content {
+      color: #374151;
+      line-height: 1.7;
+      text-align: justify;
+      font-size: 0.95rem;
+    }
+
+    /* Login Card */
+    .login-container {
+      width: 100%;
+      max-width: 450px;
+      animation: scaleIn 0.6s ease-out;
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border-radius: 28px;
+      padding: 3rem;
+      box-shadow: 0 12px 48px rgba(16, 185, 129, 0.25);
+      transition: all 0.4s ease;
+      border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .login-card:hover {
+      box-shadow: 0 16px 64px rgba(16, 185, 129, 0.35);
+    }
+
+    .login-logo {
+      display: block;
+      margin: 0 auto 2rem;
+      height: 120px;
+      width: auto;
+      filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .login-title {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .login-title h2 {
+      font-size: 1.8rem;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .login-title p {
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    /* Alert */
+    .alert-danger {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #991b1b;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #dc2626;
+      animation: shake 0.5s ease-in-out;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .form-group i {
+      position: absolute;
+      left: 1.2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      z-index: 1;
     }
 
     .form-control {
-      display: block;
       width: 100%;
-      padding: 0.375rem 0.75rem 0.375rem 40px;
+      padding: 1rem 1rem 1rem 3.2rem;
       font-size: 1rem;
-      line-height: 1.5;
-      color: #495057;
-      background-color: #fff;
-      background-clip: padding-box;
-      border: 1px solid #ced4da;
-      border-radius: 2rem;
-      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      background: #f9fafb;
+      transition: all 0.3s ease;
+      font-family: inherit;
     }
-    
+
     .form-control:focus {
-        color: #495057;
-        background-color: #fff;
-        border-color: #80bdff;
-        outline: 0;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      outline: none;
+      border-color: #10b981;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
     }
 
+    .form-control:focus + i {
+      color: #10b981;
+    }
+
+    .form-group:has(.form-control:focus) i {
+      color: #10b981;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    /* Button */
     .btn {
-      display: inline-block;
-      font-weight: 400;
-      color: #212529;
-      text-align: center;
-      vertical-align: middle;
-      user-select: none;
-      background-color: transparent;
-      border: 1px solid transparent;
-      padding: 0.375rem 0.75rem ;
-      font-size: 1rem;
-      line-height: 1.5;
-      border-radius: 2rem;
-      transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 14px;
       cursor: pointer;
-      margin-bottom:20px;
-    }
-    
-
-    .btn-primary {
-      color: #fff;
-      background-color: #0d6efd; /* Primary blue */
-      border-color: #0d6efd;
-      transition:0.4s;
-      
-    }
-
-    .btn-primary:hover {
-      background-color: #0b5ed7; /* Darker blue on hover */
-      border-color: #0a58ca;
-      margin-left:5px;
-      
-    }
-    .w-100 {
-      width: 100% !important; /* w-100 */
-    }
-
-    .text-center {
-      padding:20px 0 0 37px;
-      margin-left:100px;
-    }
-
-    .text-muted {
-      color:rgb(0, 0, 0) !important; /* text-muted */
-    }
-
-    .mt-2 {
-      margin-top: 0.5rem !important; /* mt-2 */
-    }
-    .nav {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      padding: 1rem 2rem;
-      margin: 1rem auto;
-      justify-content:center;
-      height: 105px;
-      width: 95vw;
-      max-width: 1400px;
-      border-radius: 30px;
-      background-color: #10b981;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
-      transition: all 0.4s ease;
-      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
-    .nav::before {
+
+    .btn::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-      transition: left 0.5s;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
     }
-    .nav:hover::before {
-      left: 100%;
+
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
     }
-    .nav:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.8);
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5);
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
     }
-    .nav img {
-      height: 80px;
-      width: auto;
-      margin-right: 2rem;
-      transition: transform 0.3s ease;
-      z-index: 1;
+
+    .btn:active {
+      transform: translateY(0);
     }
-    .nav img:hover {
-      transform: scale(1.05);
+
+    /* Access Info */
+    .access-info {
+      text-align: center;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      color: #065f46;
+      border: 1px solid #bbf7d0;
     }
-    @media (max-width: 768px) {
-      .nav {
+
+    .access-info strong {
+      color: #10b981;
+      font-weight: 700;
+    }
+
+    .access-info i {
+      color: #10b981;
+      margin-right: 0.5rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .main-container {
         flex-direction: column;
-        height: auto;
+      }
+
+      .info-card {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .header-content {
+        gap: 1rem;
+      }
+
+      .header-logo {
+        height: 60px;
+      }
+
+      .header-text h1 {
+        font-size: 1.3rem;
+      }
+
+      .header-text h2 {
+        font-size: 0.85rem;
+      }
+
+      .login-card {
+        padding: 2rem;
+      }
+
+      .info-card {
+        padding: 1.5rem;
+      }
+
+      .info-card-header {
+        margin: -1.5rem -1.5rem 1rem -1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-container {
         padding: 1rem;
       }
-      .nav img {
-        margin-right: 0;
-        margin-bottom: 1rem;
-      }
-      .text h2 {
-        font-size: 1.2rem;
-      }
-      .text h3 {
-        font-size: 0.9rem;
-      }
-    }
-    .text{
-      padding-top:3rem;
-      
-      display:flex;
-      flex-direction:column;
-      color:white;
-      
-    }
-    .text h2, .text h3 {
 
-      margin: 0;       /* removes browser default spacing */
-      line-height: 1.2; /* tighter spacing */
+      .login-card {
+        padding: 1.5rem;
+      }
     }
-    i{
-      padding:10px;
-    }
-    .main_contaier{
-      display:flex;
-      flex-direction:row;
-    }
-    .side_container{
-      height:400px;
-      max-width:400px;
-      background-color:#dbd6d6ff;
-      font-family:monospace;  
-      margin:50px 20px 20px 20px;
-      border-radius:20px;
-      text-align:center;
-      background: rgba(0,0,0, 0.1); 
-      backdrop-filter: blur(8px);         
-      -webkit-backdrop-filter: blur(8px);
-      border-radius:40px;
-    }
-    .content{ 
-      padding-left:0px;
-    }
-    .content_cotainer{
-      text-align:justify;
-      padding:10px 30px 0 30px;
-    }
-    .header_container{
-      position:relative;
-      height:100%;
-      margin:0;
-      padding:0;
-      border-radius:15px 15px 0 0;
-      background:#10b981
-    }
-    strong{
-      color:#dbd6d6ff !important;
-    }
-    .nav-content{
-      display:flex;
-      flex-direction:row;
-
-    }
-    
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
-  <div class="nav">
-    <div class="nav-content">
-    
-      <img src="IMAGES/OCT_LOGO.png" alt="OCT_alternate_img" style="height: 150px; width: 200px; margin-right:20px; margin-left:30px;">
-      <div class="text">
-          <h2 style="padding-left:40px; border-bottom:0.2px solid black;">OLVAREZ COLLEGE TAGAYTAY <br><h3>College of Nursing and Health-Related Sciences</h3></h2>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <img src="IMAGES/OCT_LOGO.png" alt="Olvarez College Tagaytay Logo" class="header-logo">
+      <div class="header-text">
+        <h1>OLVAREZ COLLEGE TAGAYTAY</h1>
+        <h2>College of Nursing and Health-Related Sciences</h2>
       </div>
-      <img src="IMAGES/NURSING_LOGO.png" alt="OCT_alternate_img" style="height: 150px; width: 200px; margin-right:20px; margin-left:30px;">
+      <img src="IMAGES/NURSING_LOGO.png" alt="Nursing Department Logo" class="header-logo">
     </div>
-  </div>    
-  <div class="main_contaier">
-    <div class="side_container">
-      <div class="content">
-      <div class="header_container">
-          <h1>Mision</h1>
-        </div>
-        <h2 class="content_cotainer">Automated Unified Records for Optimized Retrieval and Archiving AURORA's mission is to revolutionize healthcare documentation through seamless record integration, rapid and reliable data retrieval, and uncompromising data security-enabling healthcare professionals to focus on what matters most: delivering quality, compassionate, and efficient care.</h2>
-      </div>
-        
-    </div>
-    <div class="container"> 
-      <div class="row">
-        <div class="col">
-          <div class="card">
-            <div class="card-body">
-              <img src="IMAGES/aurora.png" alt="aurora_alternative_text" style="height:150px; width: 200px; padding-left:120px;" >
-              <?php if ($error): ?>
-                <div class="alert-danger"><?php echo htmlspecialchars($error);?></div>
-              <?php endif; ?>
-              <form method="post">
-                <div class="mb-3">
-                  <i class="fa-solid fa-user"></i>
-                  <input class="form-control" name="username" placeholder="Username" required>
-                </div>
-                <div class="mb-3">
-                  <i class="fa-solid fa-lock"></i>
-                  <input type="password" class="form-control" name="password" placeholder="Password" required>
-                </div>
-                <button class="btn btn-primary w-100">Login</button>
-              </form>
-            </div>
-          </div>
-          <p class="text-center text-muted mt-2 col-md-2">Access Passcode: <strong>admin / admin123</strong></p>
-        </div>
-      </div>
-    </div>
-    <div class="side_container">
-      <div class="content">
-        <div class="header_container">
-          <h1>Vision</h1>
-        </div>
-        <h2 class="content_cotainer">To set the standard for next generation electronic health records by delivering a unified, intelligent, and secure platform that drives excellence in healthcare, empowers providers, and enhances patient outcomes.</h2>
-        
-      </div>
-  </div>
+  </header>
 
+  <!-- Main Content -->
+  <main class="main-container">
+    <!-- Mission Card -->
+    <div class="info-card">
+      <div class="info-card-header">
+        <h3>Mission</h3>
+      </div>
+      <div class="info-card-content">
+        <p>Automated Unified Records for Optimized Retrieval and Archiving AURORA's mission is to revolutionize healthcare documentation through seamless record integration, rapid and reliable data retrieval, and uncompromising data security—enabling healthcare professionals to focus on what matters most: delivering quality, compassionate, and efficient care.</p>
+      </div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="login-container">
+      <div class="login-card">
+        <img src="IMAGES/aurora.png" alt="Aurora Logo" class="login-logo">
+        
+        <div class="login-title">
+          <h2>Welcome Back</h2>
+          <p>Please login to access the admin dashboard</p>
+        </div>
+
+        <?php if ($error): ?>
+          <div class="alert-danger">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span><?php echo htmlspecialchars($error); ?></span>
+          </div>
+        <?php endif; ?>
+
+        <form method="post">
+          <div class="form-group">
+            <input type="text" class="form-control" name="username" placeholder="Username" required>
+            <i class="fa-solid fa-user"></i>
+          </div>
+
+          <div class="form-group">
+            <input type="password" class="form-control" name="password" placeholder="Password" required>
+            <i class="fa-solid fa-lock"></i>
+          </div>
+
+          <button type="submit" class="btn">
+            <span>Login</span>
+          </button>
+        </form>
+
+        <div class="access-info">
+          <i class="fa-solid fa-key"></i>Access Passcode: <strong>admin / admin123</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vision Card -->
+    <div class="info-card">
+      <div class="info-card-header">
+        <h3>Vision</h3>
+      </div>
+      <div class="info-card-content">
+        <p>To set the standard for next generation electronic health records by delivering a unified, intelligent, and secure platform that drives excellence in healthcare, empowers providers, and enhances patient outcomes.</p>
+      </div>
+    </div>
+  </main>
 </body>
 </html>
