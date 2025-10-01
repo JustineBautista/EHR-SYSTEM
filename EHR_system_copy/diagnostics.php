@@ -13,18 +13,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $patient_id = sanitize_input($conn, $_POST['patient_id']);
     $problem    = sanitize_input($conn, $_POST['problem']);
     $diagnosis  = sanitize_input($conn, $_POST['diagnosis']);
-    $date       = sanitize_input($conn, $_POST['date_diagnosed']);
+    $date       = isset($_POST['date_diagnosed']) ? sanitize_input($conn, $_POST['date_diagnosed']) : '';
 
-    // Validate date format
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    // If date is empty, set to current date
+    if (empty($date)) {
+        $date = date('Y-m-d');
+    }
+
+    // Validate date format if provided
+    if (!empty($date) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Invalid date format. Use YYYY-MM-DD.";
     } else {
-        $sql = "INSERT INTO diagnostics (patient_id, problem, diagnosis, date_diagnosed)
-                VALUES ('$patient_id', '$problem', '$diagnosis', '$date')";
-        if (mysqli_query($conn, $sql)) {
-            $success = "Diagnosis added successfully.";
+        if (isset($_POST['edit_id']) && !empty($_POST['edit_id'])) {
+            $edit_id = intval($_POST['edit_id']);
+            $sql = "UPDATE diagnostics SET patient_id='$patient_id', problem='$problem', diagnosis='$diagnosis', date_diagnosed='$date' WHERE id=$edit_id";
+            if (mysqli_query($conn, $sql)) {
+                $success = "Diagnosis updated successfully.";
+            } else {
+                $error = "Error updating diagnosis.";
+            }
         } else {
-            $error = "Error: " . mysqli_error($conn);
+            $sql = "INSERT INTO diagnostics (patient_id, problem, diagnosis, date_diagnosed)
+                    VALUES ('$patient_id', '$problem', '$diagnosis', '$date')";
+            if (mysqli_query($conn, $sql)) {
+                $success = "Diagnosis added successfully.";
+            } else {
+                $error = "Error: " . mysqli_error($conn);
+            }
         }
     }
 }
@@ -37,6 +52,16 @@ if (isset($_GET['delete'])) {
     } else {
         $error = "Error deleting diagnosis.";
     }
+}
+
+if (isset($_GET['get_diagnosis'])) {
+    $id = intval($_GET['get_diagnosis']);
+    $sql = "SELECT * FROM diagnostics WHERE id=$id";
+    $result = mysqli_query($conn, $sql);
+    if ($row = mysqli_fetch_assoc($result)) {
+        echo json_encode($row);
+    }
+    exit;
 }
 
 include "header.php";
@@ -81,6 +106,11 @@ include "header.php";
     .btn {
       border-radius: 0.5rem;
     }
+    .btn-edit{
+      width: 5.75rem;
+      display:flex;
+      flex-direction:column;
+    }
 
     h4, h5 {
       font-weight: 700;
@@ -104,6 +134,11 @@ include "header.php";
     .btn-primary:hover {
       background-color: var(--warning-color);
       border-color: var(--warning-color);
+    }
+    .action-btn{
+      display:flex;
+      flex-direction:row;
+      gap:1.05rem;
     }
 
 </style>
@@ -157,8 +192,8 @@ include "header.php";
         <textarea id="diagnosis" name="diagnosis" class="form-control" placeholder="Diagnosis" rows="4" required></textarea>
       </div>
       <div class="col-md-4">
-        <label class="form-label">Date Diagnosed</label>
-        <input type="date" id="date_diagnosed" name="date_diagnosed" class="form-control" required>
+        <label class="form-label">Date Diagnosed(Optional)</label>
+        <input type="date" id="date_diagnosed" name="date_diagnosed" class="form-control">
       </div>
       <div class="col-md-8 d-flex align-items-end">
         <button type="submit" class="btn btn-primary">Save Diagnosis</button>
@@ -193,10 +228,15 @@ include "header.php";
             <td><?php echo htmlspecialchars($row['patient_name']); ?></td>
             <td><?php echo htmlspecialchars($row['problem']); ?></td>
             <td><?php echo htmlspecialchars($row['diagnosis']); ?></td>
-            <td><?php echo htmlspecialchars($row['date_diagnosed']); ?></td>
-            <td>
+            <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($row['date_diagnosed']))); ?></td>
+            <td class="action-btn">
               <a class="btn btn-sm btn-danger" href="diagnostics.php?delete=<?php echo $row['id']; ?>" onclick="return confirm('Delete this diagnosis?')">
-                <i class="bi bi-trash"></i>
+                  <i class="bi bi-trash"></i>
+                  Delete
+                </a>
+              <a class="btn btn-sm btn-warning btn-edit" href="#" onclick="editDiagnosis(<?php echo $row['id']; ?>)">
+                <i class="bi bi-pencil"></i>
+                Edit
               </a>
             </td>
           </tr>
@@ -206,5 +246,66 @@ include "header.php";
     </div>
   </div>
 </div>
+
+<!-- Edit Diagnosis Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Diagnosis</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" method="POST" class="row g-3">
+          <input type="hidden" name="edit_id" id="edit_id">
+          <div class="col-md-6">
+            <label class="form-label">Patient</label>
+            <select id="edit_patient_id" name="patient_id" class="form-select" required>
+                <option value="">Select Patient</option>
+                <?php
+                $patients = mysqli_query($conn, "SELECT id, fullname FROM patients ORDER BY fullname");
+                while ($p = mysqli_fetch_assoc($patients)) {
+                    echo "<option value='{$p['id']}'>{$p['fullname']}</option>";
+                }
+                ?>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Problem</label>
+            <input type="text" id="edit_problem" name="problem" class="form-control" placeholder="Problem" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Diagnosis</label>
+            <textarea id="edit_diagnosis" name="diagnosis" class="form-control" placeholder="Diagnosis" rows="4" required></textarea>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Date Diagnosed</label>
+            <input type="date" id="edit_date_diagnosed" name="date_diagnosed" class="form-control">
+          </div>  
+        </form>  
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" form="editForm" class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function editDiagnosis(id) {
+    fetch('diagnostics.php?get_diagnosis=' + id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('edit_id').value = data.id;
+            document.getElementById('edit_patient_id').value = data.patient_id;
+            document.getElementById('edit_problem').value = data.problem;
+            document.getElementById('edit_diagnosis').value = data.diagnosis;
+            document.getElementById('edit_date_diagnosed').value = data.date_diagnosed;
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+</script>
 
 <?php include "footer.php"; ?>

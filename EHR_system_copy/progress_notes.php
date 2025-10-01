@@ -104,7 +104,16 @@ include "header.php";
       background-color: var(--warning-color);
       border-color: var(--warning-color);
     }
+    .btn-action{
+      display:flex;
+      flex-direction:row;
+      gap:1rem;
+    }
+    .btn-edit, .btn-delete{
+      display:flex;
+      flex-direction:column;
 
+    }
 </style>
 
 <!-- Feedback message -->
@@ -186,9 +195,14 @@ include "header.php";
             <td><?php echo htmlspecialchars($r['note']);?></td>
             <td><?php echo htmlspecialchars($r['author']);?></td>
             <td><?php echo htmlspecialchars($r['date_written']);?></td>
-            <td>
-              <a class="btn btn-sm btn-danger" href="progress_notes.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete this note?')">
+            <td class="btn-action">
+              <a class="btn btn-sm btn-danger btn-Delete" href="progress_notes.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete this note?')">
                 <i class="bi bi-trash"></i>
+                Delete
+              </a>
+              <a class="btn btn-sm btn-warning me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editNoteModal" data-id="<?php echo $r['id']; ?>" data-patient="<?php echo htmlspecialchars($r['fullname']); ?>" data-note="<?php echo htmlspecialchars($r['note']); ?>" data-author="<?php echo htmlspecialchars($r['author']); ?>" data-date="<?php echo htmlspecialchars($r['date_written']); ?>">
+                <i class="bi bi-pencil"></i>
+                Edit
               </a>
             </td>
           </tr>
@@ -198,5 +212,88 @@ include "header.php";
     </div>
   </div>
 </div>
+
+<!-- Edit Note Modal -->
+<div class="modal fade" id="editNoteModal" tabindex="-1" aria-labelledby="editNoteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editNoteModalLabel">Edit Progress Note</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="editNoteForm">
+          <input type="hidden" name="edit_note_id" id="edit_note_id">
+          <div class="mb-3">
+            <label for="edit_patient" class="form-label">Patient</label>
+            <input type="text" class="form-control" id="edit_patient" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="edit_author" class="form-label">Author</label>
+            <input type="text" class="form-control" name="edit_author" id="edit_author" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_date" class="form-label">Date/Time</label>
+            <input type="text" class="form-control" name="edit_date" id="edit_date" placeholder="YYYY-MM-DD or YYYY-MM-DD HH:MM:SS" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_note" class="form-label">Progress Note</label>
+            <textarea class="form-control" name="edit_note" id="edit_note" rows="4" required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" form="editNoteForm" name="save_edit" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var editButtons = document.querySelectorAll('.edit-btn');
+  var editModal = new bootstrap.Modal(document.getElementById('editNoteModal'));
+  var editNoteForm = document.getElementById('editNoteForm');
+
+  editButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+      document.getElementById('edit_note_id').value = this.getAttribute('data-id');
+      document.getElementById('edit_patient').value = this.getAttribute('data-patient');
+      document.getElementById('edit_author').value = this.getAttribute('data-author');
+      document.getElementById('edit_date').value = this.getAttribute('data-date');
+      document.getElementById('edit_note').value = this.getAttribute('data-note');
+      editModal.show();
+    });
+  });
+});
+</script>
+
+<?php
+// Handle edit note POST request
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['save_edit'])) {
+    $edit_id = intval($_POST['edit_note_id']);
+    $edit_author = sanitize_input($conn, $_POST['edit_author'] ?? "");
+    $edit_date = $_POST['edit_date'] ?: date("Y-m-d H:i:s");
+    $edit_note = sanitize_input($conn, $_POST['edit_note'] ?? "");
+
+    // Validate date format if provided
+    if (!empty($_POST['edit_date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $edit_date)) {
+        $error = "Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
+    } else {
+        $stmt = $conn->prepare("UPDATE progress_notes SET author=?, date_written=?, note=? WHERE id=?");
+        $stmt->bind_param("sssi", $edit_author, $edit_date, $edit_note, $edit_id);
+        if ($stmt->execute()) {
+            $msg = "Note updated.";
+            // Redirect to avoid form resubmission
+            header("Location: progress_notes.php");
+            exit;
+        } else {
+            $error = "Error updating note: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+}
+?>
 
 <?php include "footer.php"; ?>

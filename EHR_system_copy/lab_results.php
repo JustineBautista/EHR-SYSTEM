@@ -1,3 +1,4 @@
+  
 <?php
 $page_title = "Lab Results";
 $msg = "";
@@ -49,6 +50,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_lab'])) {
         $stmt->close();
     }
 }
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_lab'])) {
+    $id = intval($_POST['lab_id']);
+    $pid = intval($_POST['edit_patient_id']);
+    $test = sanitize_input($conn, $_POST['edit_test_name'] ?? "");
+    $result = sanitize_input($conn, $_POST['edit_result'] ?? "");
+    $date = $_POST['edit_date'] ?: date("Y-m-d H:i:s");
+
+    // Validate date format if provided
+    if (!empty($_POST['edit_date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
+        $error = "Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
+    }
+    // Validate common lab test results with appropriate ranges
+    elseif (strtolower($test) == "glucose" && is_numeric($result) && ($result < 70 || $result > 200)) {
+        $error = "Warning: Glucose value ($result mg/dL) is outside normal range (70-200 mg/dL). Please verify.";
+    }
+    elseif (strtolower($test) == "hemoglobin" && is_numeric($result) && ($result < 7 || $result > 20)) {
+        $error = "Warning: Hemoglobin value ($result g/dL) is outside normal range (7-20 g/dL). Please verify.";
+    }
+    elseif (strtolower($test) == "cholesterol" && is_numeric($result) && ($result < 100 || $result > 300)) {
+        $error = "Warning: Cholesterol value ($result mg/dL) is outside normal range (100-300 mg/dL). Please verify.";
+    }
+    elseif (strtolower($test) == "wbc" && is_numeric($result) && ($result < 3 || $result > 15)) {
+        $error = "Warning: White Blood Cell count ($result K/uL) is outside normal range (3-15 K/uL). Please verify.";
+    }
+    elseif (strtolower($test) == "platelet" && is_numeric($result) && ($result < 100 || $result > 500)) {
+        $error = "Warning: Platelet count ($result K/uL) is outside normal range (100-500 K/uL). Please verify.";
+    }
+    elseif (strtolower($test) == "creatinine" && is_numeric($result) && ($result < 0.5 || $result > 2.0)) {
+        $error = "Warning: Creatinine value ($result mg/dL) is outside normal range (0.5-2.0 mg/dL). Please verify.";
+    }
+    else {
+        $stmt = $conn->prepare("UPDATE lab_results SET patient_id=?, test_name=?, test_result=?, date_taken=? WHERE id=?");
+        $stmt->bind_param("isssi", $pid, $test, $result, $date, $id);
+        if ($stmt->execute()) {
+            $msg = "Lab result updated.";
+        } else {
+            $error = "Error: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+}
+
+
 
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
@@ -124,6 +169,17 @@ include "header.php";
       background-color: var(--warning-color);
       border-color: var(--warning-color);
     }
+    .btn-edit, .btn-delete{
+      width: 5.75rem;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .action-btn{
+      display:flex;
+      flex-direction:row;
+      gap:1.05rem;
+    }
 
 </style>
 
@@ -177,7 +233,7 @@ include "header.php";
           </div>
           <div class="col-md-6">
             <label for="date" class="form-label">Date (optional)</label>
-            <input id="date" class="form-control" name="date" placeholder="YYYY-MM-DD or YYYY-MM-DD HH:MM:SS">
+            <input id="date" class="form-control" name="date" placeholder="YYYY-MM-DD">
           </div>
           <div class="col-12">
             <label for="result" class="form-label">Result</label>
@@ -196,7 +252,7 @@ include "header.php";
           </thead>
           <tbody>
           <?php
-          $sql = "SELECT l.id, p.fullname, l.test_name, l.test_result, l.date_taken FROM lab_results l JOIN patients p ON l.patient_id=p.id ORDER BY l.date_taken DESC";
+          $sql = "SELECT l.id, l.patient_id, p.fullname, l.test_name, l.test_result, l.date_taken FROM lab_results l JOIN patients p ON l.patient_id=p.id ORDER BY l.date_taken DESC";
           $res = $conn->query($sql);
           while ($r = $res->fetch_assoc()): ?>
             <tr>
@@ -204,8 +260,17 @@ include "header.php";
               <td><?php echo htmlspecialchars($r['fullname']);?></td>
               <td><?php echo htmlspecialchars($r['test_name']);?></td>
               <td><?php echo htmlspecialchars($r['test_result']);?></td>
-              <td><?php echo htmlspecialchars($r['date_taken']);?></td>
-              <td><a class="btn btn-sm btn-danger" href="lab_results.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete?')">Delete</a></td>
+              <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($r['date_taken'])));?></td>
+              <td class="action-btn">
+                <a class="btn btn-sm btn-danger btn-delete" href="lab_results.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete?')">
+                  <i class="bi bi-trash"></i>
+                  Delete
+                </a>
+                <a class="btn btn-sm btn-warning btn-edit" href="#" data-bs-toggle="modal" data-bs-target="#editModal" data-id="<?php echo $r['id']; ?>" data-patient-id="<?php echo $r['patient_id']; ?>" data-patient-name="<?php echo htmlspecialchars($r['fullname']); ?>" data-test-name="<?php echo htmlspecialchars($r['test_name']); ?>" data-result="<?php echo htmlspecialchars($r['test_result']); ?>" data-date="<?php echo htmlspecialchars($r['date_taken']); ?>">
+                  <i class="bi bi-pencil"></i>
+                  Edit
+                </a>
+              </td>
             </tr>
           <?php endwhile; ?>
           </tbody>
@@ -214,6 +279,68 @@ include "header.php";
     </div>
   </div>
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Lab Result</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="lab_id" id="edit_lab_id">
+        <div class="mb-3">
+          <label for="edit_patient_id" class="form-label">Select Patient</label>
+          <select id="edit_patient_id" name="edit_patient_id" class="form-select" required>
+            <option value="">Select patient</option>
+            <?php
+            $p = $conn->query("SELECT id,fullname FROM patients ORDER BY fullname");
+            while($pp=$p->fetch_assoc()):
+            ?>
+              <option value="<?php echo $pp['id'];?>"><?php echo htmlspecialchars($pp['fullname']);?></option>
+            <?php endwhile; ?>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="edit_test_name" class="form-label">Test Name</label>
+          <input id="edit_test_name" class="form-control" name="edit_test_name" placeholder="Test name" required>
+        </div>
+        <div class="mb-3">
+          <label for="edit_date" class="form-label">Date (optional)</label>
+          <input id="edit_date" class="form-control" name="edit_date" placeholder="YYYY-MM-DD">
+        </div>
+        <div class="mb-3">
+          <label for="edit_result" class="form-label">Result</label>
+          <textarea id="edit_result" class="form-control" name="edit_result" placeholder="Result"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" name="update_lab" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  var editModal = document.getElementById('editModal');
+  editModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    var id = button.getAttribute('data-id');
+    var patientId = button.getAttribute('data-patient-id');
+    var testName = button.getAttribute('data-test-name');
+    var result = button.getAttribute('data-result');
+    var date = button.getAttribute('data-date');
+
+    // Set modal fields
+    document.getElementById('edit_lab_id').value = id;
+    document.getElementById('edit_patient_id').value = patientId;
+    document.getElementById('edit_test_name').value = testName;
+    document.getElementById('edit_result').value = result;
+    document.getElementById('edit_date').value = date;
+  });
+</script>
 
 
 
@@ -442,6 +569,8 @@ include "header.php";
     renderer.setSize(width, height);
     labelRenderer.setSize(width, height);
   });
+
+
 </script>
 
 <?php include "footer.php"; ?>

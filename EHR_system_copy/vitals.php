@@ -13,7 +13,7 @@ if (isset($_POST['add_vitals'])) {
     $temp = $_POST['temp'] ?? "";
     $height = $_POST['height'] ?? "";
     $weight = $_POST['weight'] ?? "";
-    $date = $_POST['date'] ?: date("Y-m-d H:i:s");
+    $date = $_POST['date'] ?: date("Y-m-d");
 
     // Check if patient_id is valid
     if ($pid <= 0) {
@@ -39,9 +39,9 @@ if (isset($_POST['add_vitals'])) {
     elseif (!empty($weight) && (!is_numeric($weight) || $weight < 0.5 || $weight > 500)) {
         $error = "Weight must be between 0.5-500 kg";
     }
-    // Validate date format
-    elseif (!empty($date) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
-        $error = "Date must be in format YYYY-MM-DD or YYYY-MM-DD HH:MM:SS";
+    // Validate date format if provided
+    elseif (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        $error = "Date must be in format YYYY-MM-DD.";
     }
     else {
         $stmt = $conn->prepare("INSERT INTO vitals (patient_id, bp, hr, temp, height, weight, date_taken) VALUES (?,?,?,?,?,?,?)");
@@ -71,7 +71,7 @@ if (isset($_POST['update_vitals'])) {
     $temp = $_POST['temp'] ?? "";
     $height = $_POST['height'] ?? "";
     $weight = $_POST['weight'] ?? "";
-    $date = $_POST['date'] ?: date("Y-m-d H:i:s");
+    $date = $_POST['date'] ?: date("Y-m-d");
 
     // Check if patient_id is valid
     if ($pid <= 0) {
@@ -97,9 +97,9 @@ if (isset($_POST['update_vitals'])) {
     elseif (!empty($weight) && (!is_numeric($weight) || $weight < 0.5 || $weight > 500)) {
         $error = "Weight must be between 0.5-500 kg";
     }
-    // Validate date format
-    elseif (!empty($date) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
-        $error = "Date must be in format YYYY-MM-DD or YYYY-MM-DD HH:MM:SS";
+    // Validate date format if provided
+    elseif (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        $error = "Date must be in format YYYY-MM-DD.";
     }
     else {
         $stmt = $conn->prepare("UPDATE vitals SET patient_id=?, bp=?, hr=?, temp=?, height=?, weight=?, date_taken=? WHERE id=?");
@@ -111,6 +111,16 @@ if (isset($_POST['update_vitals'])) {
         }
         $stmt->close();
     }
+}
+
+if (isset($_GET['get_vital'])) {
+    $id = intval($_GET['get_vital']);
+    $sql = "SELECT * FROM vitals WHERE id=$id";
+    $result = mysqli_query($conn, $sql);
+    if ($row = mysqli_fetch_assoc($result)) {
+        echo json_encode($row);
+    }
+    exit;
 }
 
 include "header.php";
@@ -179,6 +189,17 @@ include "header.php";
       background-color: var(--warning-color);
       border-color: var(--warning-color);
     }
+    .action-btn{
+      display:flex;
+      flex-direction:row;
+      gap:1.05rem;
+    }
+
+    .btn-edit, .btn-delete{
+      width: 5.75rem;
+      display:flex;
+      flex-direction:column;
+    }
 
 </style>
 
@@ -220,7 +241,7 @@ include "header.php";
       <div class="col-md-2"><input class="form-control" name="bp" placeholder="BP (eg.120/80)"></div>
       <div class="col-md-2"><input class="form-control" name="hr" placeholder="HR (bpm)"></div>
       <div class="col-md-2"><input class="form-control" name="temp" placeholder="Temp (°C)"></div>
-      <div class="col-md-2"><input class="form-control" name="date" placeholder="Date/time"></div>
+      <div class="col-md-2"><input class="form-control" name="date" placeholder="YYYY-MM-DD(Optional)"></div>
       <div class="col-md-3"><input class="form-control" name="height" placeholder="Height (cm)"></div>
       <div class="col-md-3"><input class="form-control" name="weight" placeholder="Weight (kg)"></div>
       <div class="col-12"><button name="add_vitals" class="btn btn-primary">Record Vitals</button></div>
@@ -243,20 +264,16 @@ include "header.php";
           <td><?php echo htmlspecialchars($r['temp']);?></td>
           <td><?php echo htmlspecialchars($r['height']);?></td>
           <td><?php echo htmlspecialchars($r['weight']);?></td>
-          <td><?php echo htmlspecialchars($r['date_taken']);?></td>
-          <td>
-            <button type="button" class="btn btn-sm btn-warning me-1 edit-btn"
-              data-bs-toggle="modal" data-bs-target="#editModal"
-              data-id="<?php echo $r['id'];?>"
-              data-patient_id="<?php echo $r['patient_id'];?>"
-              data-bp="<?php echo htmlspecialchars($r['bp']);?>"
-              data-hr="<?php echo htmlspecialchars($r['hr']);?>"
-              data-temp="<?php echo htmlspecialchars($r['temp']);?>"
-              data-height="<?php echo htmlspecialchars($r['height']);?>"
-              data-weight="<?php echo htmlspecialchars($r['weight']);?>"
-              data-date="<?php echo htmlspecialchars($r['date_taken']);?>"
-            >Edit</button>
-            <a class="btn btn-sm btn-danger" href="vitals.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete?')">Delete</a>
+          <td><?php echo htmlspecialchars(substr($r['date_taken'], 0, 10));?></td>
+          <td class="action-btn">
+            <a class="btn btn-sm btn-danger btn-delete" href="vitals.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete?')">
+              <i class="bi bi-trash"></i>
+              Delete
+            </a>
+            <a class="btn btn-sm btn-warning btn-edit" href="#" onclick="editVital(<?php echo $r['id']; ?>)">
+              <i class="bi bi-pencil"></i>
+              Edit
+            </a>
           </td>
         </tr>
       <?php endwhile; ?>
@@ -278,7 +295,7 @@ include "header.php";
           <input type="hidden" name="vital_id" id="vital_id">
           <div class="mb-3">
             <label for="patient_id" class="form-label">Patient</label>
-            <select name="patient_id" id="patient_id" class="form-select" disabled>
+            <select name="patient_id" id="patient_id" class="form-select" required>
               <option value="">Select patient</option>
               <?php
                 $p = $conn->query("SELECT id,fullname FROM patients ORDER BY fullname");
@@ -286,7 +303,6 @@ include "header.php";
                 <option value="<?php echo $pp['id'];?>"><?php echo htmlspecialchars($pp['fullname']);?></option>
               <?php endwhile; ?>
             </select>
-            <input type="hidden" name="patient_id" id="patient_id_hidden">
           </div>
           <div class="mb-3">
             <label for="bp" class="form-label">Blood Pressure (e.g., 120/80)</label>
@@ -309,8 +325,8 @@ include "header.php";
             <input type="number" step="0.1" class="form-control" name="weight" id="weight" placeholder="Weight (kg)">
           </div>
           <div class="mb-3">
-            <label for="date" class="form-label">Date/Time</label>
-            <input type="text" class="form-control" name="date" id="date" placeholder="Date/time">
+            <label for="date" class="form-label">Date</label>
+            <input class="form-control" name="date" id="date" placeholder="YYYY-MM-DD">
           </div>
         </div>
         <div class="modal-footer">
@@ -323,31 +339,22 @@ include "header.php";
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  var editModal = document.getElementById('editModal');
-  editModal.addEventListener('show.bs.modal', function (event) {
-    var button = event.relatedTarget;
-    var id = button.getAttribute('data-id');
-    var patientId = button.getAttribute('data-patient_id');
-    var bp = button.getAttribute('data-bp');
-    var hr = button.getAttribute('data-hr');
-    var temp = button.getAttribute('data-temp');
-    var height = button.getAttribute('data-height');
-    var weight = button.getAttribute('data-weight');
-    var date = button.getAttribute('data-date');
-
-    // Populate modal fields
-    document.getElementById('vital_id').value = id;
-    document.getElementById('patient_id').value = patientId;
-    document.getElementById('patient_id_hidden').value = patientId;
-    document.getElementById('bp').value = bp;
-    document.getElementById('hr').value = hr;
-    document.getElementById('temp').value = temp;
-    document.getElementById('height').value = height;
-    document.getElementById('weight').value = weight;
-    document.getElementById('date').value = date;
-  });
-});
+function editVital(id) {
+    fetch('vitals.php?get_vital=' + id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('vital_id').value = data.id;
+            document.getElementById('patient_id').value = data.patient_id;
+            document.getElementById('bp').value = data.bp;
+            document.getElementById('hr').value = data.hr;
+            document.getElementById('temp').value = data.temp;
+            document.getElementById('height').value = data.height;
+            document.getElementById('weight').value = data.weight;
+            document.getElementById('date').value = data.date_taken;
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
 </script>
 
 <?php include "footer.php"; ?>

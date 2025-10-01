@@ -16,6 +16,20 @@ if (isset($_POST['add_history'])) {
     $stmt->close();
 }
 
+// Update history
+if (isset($_POST['update_history'])) {
+    $id = intval($_POST['id']);
+    $pid = intval($_POST['patient_id']);
+    $condition = $_POST['condition'] ?? "";
+    $notes = $_POST['notes'] ?? "";
+    $date = $_POST['date'] ?: date("Y-m-d H:i:s");
+
+    $stmt = $conn->prepare("UPDATE medical_history SET patient_id=?, condition_name=?, notes=?, date_recorded=? WHERE id=?");
+    $stmt->bind_param("isssi", $pid, $condition, $notes, $date, $id);
+    if ($stmt->execute()) $msg = "History updated successfully.";
+    $stmt->close();
+}
+
 // Delete history
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
@@ -23,6 +37,19 @@ if (isset($_GET['delete'])) {
     $stmt->bind_param("i",$id);
     if ($stmt->execute()) $msg = "History deleted.";
     $stmt->close();
+}
+
+if (isset($_GET['get_history'])) {
+    $id = intval($_GET['get_history']);
+    $stmt = $conn->prepare("SELECT * FROM medical_history WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        echo json_encode($row);
+    }
+    $stmt->close();
+    exit;
 }
 
 include "header.php";
@@ -90,6 +117,16 @@ include "header.php";
     .btn-primary:hover {
       background-color: var(--warning-color);
       border-color: var(--warning-color);
+    }
+    .action-btn{
+      display:flex;
+      flex-direction:row;
+      gap:1.05rem;
+    }
+    .btn-edit{
+      width: 5.75rem;
+      display:flex;
+      flex-direction:column;
     }
 
 </style>
@@ -160,9 +197,9 @@ include "header.php";
         </thead>
         <tbody>
         <?php
-        $sql = "SELECT h.id, p.fullname, h.condition_name, h.notes, h.date_recorded 
-                FROM medical_history h 
-                JOIN patients p ON h.patient_id=p.id 
+        $sql = "SELECT h.id, h.patient_id, p.fullname, h.condition_name, h.notes, h.date_recorded
+                FROM medical_history h
+                JOIN patients p ON h.patient_id=p.id
                 ORDER BY h.date_recorded DESC";
         $res = $conn->query($sql);
         while ($r = $res->fetch_assoc()): ?>
@@ -172,9 +209,14 @@ include "header.php";
             <td><?php echo htmlspecialchars($r['condition_name']);?></td>
             <td><?php echo htmlspecialchars($r['notes']);?></td>
             <td><?php echo htmlspecialchars($r['date_recorded']);?></td>
-            <td>
-              <a class="btn btn-sm btn-danger" href="medical_history.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete this record?')">
-                <i class="bi bi-trash"></i>
+            <td class="action-btn">
+              <a class="btn btn-sm btn-danger" href="medical_history.php?delete=<?php echo $r['id']; ?>" onclick="return confirm('Delete this record?')">
+                  <i class="bi bi-trash"></i>
+                  Delete
+                </a>
+              <a class="btn btn-sm btn-warning btn-edit" href="#" onclick="editHistory(<?php echo $r['id']; ?>)">
+                <i class="bi bi-pencil"></i>
+                Edit
               </a>
             </td>
           </tr>
@@ -184,5 +226,65 @@ include "header.php";
     </div>
   </div>
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Medical History</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post">
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-id">
+          <div class="mb-3">
+            <label class="form-label">Patient</label>
+            <select name="patient_id" id="edit-patient-id" class="form-select" required>
+              <option value="">Select patient...</option>
+              <?php
+              $ps = $conn->query("SELECT id, fullname FROM patients ORDER BY fullname");
+              while ($p = $ps->fetch_assoc()): ?>
+                <option value="<?php echo $p['id']; ?>"><?php echo htmlspecialchars($p['fullname']); ?></option>
+              <?php endwhile; ?>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Condition / Illness</label>
+            <input class="form-control" name="condition" id="edit-condition" placeholder="Enter condition" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <textarea class="form-control" name="notes" id="edit-notes" placeholder="Additional notes..."></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Date</label>
+            <input class="form-control" name="date" id="edit-date" placeholder="YYYY-MM-DD HH:MM:SS (optional)">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button name="update_history" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function editHistory(id) {
+    fetch('medical_history.php?get_history=' + id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('edit-id').value = data.id;
+            document.getElementById('edit-patient-id').value = data.patient_id;
+            document.getElementById('edit-condition').value = data.condition_name;
+            document.getElementById('edit-notes').value = data.notes;
+            document.getElementById('edit-date').value = data.date_recorded;
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+</script>
 
 <?php include "footer.php"; ?>

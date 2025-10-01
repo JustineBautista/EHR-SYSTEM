@@ -17,12 +17,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['add_plan'])) {
 
     // Validate date format if provided
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
-        $error = "Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
+        $error = "Date must be in format YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
     } else {
         $stmt = $conn->prepare("INSERT INTO treatment_plans (patient_id, plan, notes, date_planned) VALUES (?,?,?,?)");
         $stmt->bind_param("isss", $pid, $plan, $notes, $date);
         if ($stmt->execute()) {
             $msg = "Treatment plan added.";
+        } else {
+            $error = "Error: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_plan'])) {
+    $id = intval($_POST['edit_id']);
+    $plan = sanitize_input($conn, $_POST['edit_plan'] ?? "");
+    $notes = sanitize_input($conn, $_POST['edit_notes'] ?? "");
+    $date = $_POST['edit_date'] ?: date("Y-m-d H:i:s");
+
+    // Validate date format if provided
+    if (!empty($_POST['edit_date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
+        $error = "Date must be in format YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
+    } else {
+        $stmt = $conn->prepare("UPDATE treatment_plans SET plan=?, notes=?, date_planned=? WHERE id=?");
+        $stmt->bind_param("sssi", $plan, $notes, $date, $id);
+        if ($stmt->execute()) {
+            $msg = "Treatment plan updated.";
         } else {
             $error = "Error: " . $stmt->error;
         }
@@ -104,7 +125,16 @@ include "header.php";
       background-color: var(--warning-color);
       border-color: var(--warning-color);
     }
-
+    .btn-action{
+      display:flex;
+      flex-direction:row;
+      gap:1rem;
+    }
+    .btn-edit, .btn-delete{
+      width: 5.75rem;
+      display:flex;
+      flex-direction:column;
+    }
 </style>
 
 <!-- Feedback message -->
@@ -148,11 +178,11 @@ include "header.php";
         <input id="plan" class="form-control" name="plan" placeholder="Treatment plan" required>
       </div>
       <div class="col-md-4">
-        <label for="date" class="form-label">Date/Time</label>
-        <input id="date" class="form-control" name="date" placeholder="YYYY-MM-DD or YYYY-MM-DD HH:MM:SS">
+        <label for="date" class="form-label">Date/Time(Optional)</label>
+        <input id="date" class="form-control" name="date" placeholder="YYYY-MM-DD/HH:MM:SS">
       </div>
       <div class="col-12">
-        <label for="notes" class="form-label">Notes</label>
+        <label for="notes" class="form-label">Notes</label> 
         <textarea id="notes" class="form-control" name="notes" placeholder="Notes" rows="3"></textarea>
       </div>
       <div class="col-12 d-flex align-items-end">
@@ -186,9 +216,14 @@ include "header.php";
             <td><?php echo htmlspecialchars($r['plan']);?></td>
             <td><?php echo htmlspecialchars($r['notes']);?></td>
             <td><?php echo htmlspecialchars($r['date_planned']);?></td>
-            <td>
-              <a class="btn btn-sm btn-danger" href="treatment_plans.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete this plan?')">
-                <i class="bi bi-trash"></i>
+            <td class="btn-action">
+              <a class="btn btn-sm btn-danger btn-Delete" href="treatment_plans.php?delete=<?php echo $r['id'];?>" onclick="return confirm('Delete this plan?')">
+                  <i class="bi bi-trash"></i>
+                  Delete
+              </a>
+              <a class="btn btn-sm btn-warning me-1 btn-edit" data-bs-toggle="modal" data-bs-target="#editModal" data-id="<?php echo $r['id']; ?>" data-patient="<?php echo htmlspecialchars($r['fullname']); ?>" data-plan="<?php echo htmlspecialchars($r['plan']); ?>" data-notes="<?php echo htmlspecialchars($r['notes']); ?>" data-date="<?php echo htmlspecialchars($r['date_planned']); ?>">
+                <i class="bi bi-pencil"></i>
+                Edit
               </a>
             </td>
           </tr>
@@ -198,5 +233,59 @@ include "header.php";
     </div>
   </div>
 </div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Treatment Plan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="editForm">
+          <input type="hidden" name="edit_id" id="edit_id">
+          <div class="mb-3">
+            <label for="edit_patient" class="form-label">Patient</label>
+            <input type="text" class="form-control" id="edit_patient" readonly>
+          </div>
+          <div class="mb-3">
+            <label for="edit_plan" class="form-label">Treatment Plan</label>
+            <input type="text" class="form-control" name="edit_plan" id="edit_plan" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_notes" class="form-label">Notes</label>
+            <textarea class="form-control" name="edit_notes" id="edit_notes" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="edit_date" class="form-label">Date/Time</label>
+            <input type="text" class="form-control" name="edit_date" id="edit_date">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" form="editForm" name="update_plan" class="btn btn-primary">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var editModal = document.getElementById('editModal');
+editModal.addEventListener('show.bs.modal', function (event) {
+  var button = event.relatedTarget;
+  var id = button.getAttribute('data-id');
+  var patient = button.getAttribute('data-patient');
+  var plan = button.getAttribute('data-plan');
+  var notes = button.getAttribute('data-notes');
+  var date = button.getAttribute('data-date');
+  document.getElementById('edit_id').value = id;
+  document.getElementById('edit_patient').value = patient;
+  document.getElementById('edit_plan').value = plan;
+  document.getElementById('edit_notes').value = notes;
+  document.getElementById('edit_date').value = date;
+});
+</script>
 
 <?php include "footer.php"; ?>

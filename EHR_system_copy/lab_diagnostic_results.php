@@ -3,38 +3,52 @@ $page_title = "Lab & Diagnostic Results";
 // Include header (this already has session + db connection)
 include "header.php";
 
-// Get patient ID
-$patient_id = isset($_GET['patient_id']) ? intval($_GET['patient_id']) : 0;
+$search_query = isset($_GET['search_query']) ? trim($_GET['search_query']) : '';
 
-if ($patient_id > 0) {
-    // Fetch patient details
-    $patient_stmt = $conn->prepare("SELECT fullname, dob, gender, contact, address FROM patients WHERE id=?");
-    $patient_stmt->bind_param("i", $patient_id);
+$patient = null;
+$lab_results = null;
+$diag_results = null;
+
+if ($search_query !== '') {
+    // Determine if search query is numeric (patient ID) or string (patient name)
+    if (ctype_digit($search_query)) {
+        // Search by patient ID
+        $patient_id = intval($search_query);
+        $patient_stmt = $conn->prepare("SELECT id, fullname, dob, gender, contact, address FROM patients WHERE id=?");
+        $patient_stmt->bind_param("i", $patient_id);
+    } else {
+        // Search by patient name (partial match)
+        $like_query = "%".$search_query."%";
+        $patient_stmt = $conn->prepare("SELECT id, fullname, dob, gender, contact, address FROM patients WHERE fullname LIKE ? LIMIT 1");
+        $patient_stmt->bind_param("s", $like_query);
+    }
     $patient_stmt->execute();
     $patient_result = $patient_stmt->get_result();
     $patient = $patient_result->fetch_assoc();
     $patient_stmt->close();
 
     if (!$patient) {
-        echo "<div class='alert alert-danger mt-3'>Patient not found.</div>";
-        exit;
+        // Patient not found
+        $patient_not_found = true;
+    } else {
+        $patient_id = $patient['id'];
+
+        // Fetch lab results
+        $lab_sql = "SELECT test_name, test_result, date_taken FROM lab_results WHERE patient_id=? ORDER BY date_taken DESC";
+        $lab_stmt = $conn->prepare($lab_sql);
+        $lab_stmt->bind_param("i", $patient_id);
+        $lab_stmt->execute();
+        $lab_results = $lab_stmt->get_result();
+        $lab_stmt->close();
+
+        // Fetch diagnostics
+        $diag_sql = "SELECT problem, diagnosis, date_diagnosed FROM diagnostics WHERE patient_id=? ORDER BY date_diagnosed DESC";
+        $diag_stmt = $conn->prepare($diag_sql);
+        $diag_stmt->bind_param("i", $patient_id);
+        $diag_stmt->execute();
+        $diag_results = $diag_stmt->get_result();
+        $diag_stmt->close();
     }
-
-    // Fetch lab results
-    $lab_sql = "SELECT test_name, test_result, date_taken FROM lab_results WHERE patient_id=? ORDER BY date_taken DESC";
-    $lab_stmt = $conn->prepare($lab_sql);
-    $lab_stmt->bind_param("i", $patient_id);
-    $lab_stmt->execute();
-    $lab_results = $lab_stmt->get_result();
-    $lab_stmt->close();
-
-    // Fetch diagnostics
-    $diag_sql = "SELECT problem, diagnosis, date_diagnosed FROM diagnostics WHERE patient_id=? ORDER BY date_diagnosed DESC";
-    $diag_stmt = $conn->prepare($diag_sql);
-    $diag_stmt->bind_param("i", $patient_id);
-    $diag_stmt->execute();
-    $diag_results = $diag_stmt->get_result();
-    $diag_stmt->close();
 }
 ?>
 
@@ -94,40 +108,42 @@ if ($patient_id > 0) {
       border-color: var(--primary-color);
       border-radius: 8px;
       font-weight: 600;
-      padding: 10px 15px;
     }
     
     .btn-primary:hover {
       background-color: var(--warning-color);
       border-color: var(--warning-color);
     }
-
+    .btn-search{
+        padding:10px;
+    }
+    .input{
+        width: 30%;
+    }
 </style>
+<script src="lab_diagnostic_results_search_validation.js"></script>
 <div class="container mt-4">
     <h4 class="text-success fw-bold text-center mb-4">
         <i class="bi bi-clipboard2-pulse me-2"></i> Laboratory & Diagnostic Results
     </h4>
 
     <div class="card p-3 mb-3">
-        <form method="get" class="row g-2">
-            <div class="col-md-6">
-                <label for="patient_id" class="form-label fw-bold">Select Patient</label>
-                <select id="patient_id" name="patient_id" class="form-select" onchange="this.form.submit()">
-                    <option value="">Select patient</option>
-                    <?php
-                    $patients = $conn->query("SELECT id, fullname FROM patients ORDER BY fullname");
-                    while ($p = $patients->fetch_assoc()) {
-                        $selected = ($patient_id == $p['id']) ? 'selected' : '';
-                        echo "<option value='{$p['id']}' {$selected}>{$p['fullname']}</option>";
-                    }
-                    ?>
-                </select>
+        <form method="get" class="row g-2" onsubmit="return validateSearch()">
+            <div class="col-md-6 d-flex align-items-center">
+                    <label for="search_query" class="form-label fw-bold me-2 mb-0 flex-shrink-0">Search Patient by ID or Name: </label>
+                    <input type="text" id="search_query" name="search_query" class="form-control me-2" placeholder="Enter patient ID or name" value="<?= htmlspecialchars($search_query); ?>" autocomplete="off" />
+                
+                <button type="submit" class="btn btn-primary btn-search" aria-label="Search">
+                    <i class="bi bi-search"></i>
+                </button>
             </div>
         </form>
     </div>
 
-    <?php if ($patient_id == 0): ?>
-        <div class="alert alert-info">Please select a patient to view their results.</div>
+    <?php if ($search_query === ''): ?>
+        <div class="alert alert-info">Please search for a patient to view their results.</div>
+    <?php elseif (isset($patient_not_found) && $patient_not_found): ?>
+        <div class="alert alert-danger">The patient does not exist!</div>
     <?php else: ?>
         <!-- Patient Info -->
         <div class="card p-3 mb-3">

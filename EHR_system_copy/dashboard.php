@@ -282,7 +282,7 @@ include "header.php";
               <i class="bi bi-clipboard-data me-2"></i>Enter Lab Results
             </a>
             <a class="btn btn-outline-success w-100" href="medications.php">
-              <i class="bi bi-capsule me-2"></i>Manage Medications
+              <i class="bi bi-capsule me-2"></i>Manage Current Medications
             </a>
           </div>
         </div>
