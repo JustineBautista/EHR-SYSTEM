@@ -329,6 +329,7 @@ require_once 'db.php';
                             <li><a class="dropdown-item" href="medical_history.php">Medical History</a></li>
                             <li><a class="dropdown-item" href="progress_notes.php">Progress Notes</a></li>
                             <li><a class="dropdown-item" href="treatment_plans.php">Treatment Plans</a></li>
+                             <li><a class="dropdown-item" href="lab_diagnostic_results.php">Lab and Diagnostics Result </a></li>
                         </ul>
                     </li>
                 </ul>
@@ -338,8 +339,6 @@ require_once 'db.php';
                             <i class="bi bi-person-circle me-1"></i>Admin
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-1"></i>Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
                         </ul>
                     </li>
