@@ -1,8 +1,19 @@
-<?php
+``<?php
+// Start session and check authentication first
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['admin'])) {
+    header("Location: index.php");
+    exit();
+}
+
 $page_title = "Vital Signs";
 $msg = "";
 $error = "";
 include "db.php";
+include "audit_trail.php";
 
 
 
@@ -45,7 +56,7 @@ if (isset($_POST['add_vitals'])) {
     }
     else {
         $stmt = $conn->prepare("INSERT INTO vitals (patient_id, bp, hr, temp, height, weight, date_taken) VALUES (?,?,?,?,?,?,?)");
-        $stmt->bind_param("issssss", $pid, $bp, $hr, $temp, $height, $weight, $date);
+        $stmt->bind_param("isdddds", $pid, $bp, $hr, $temp, $height, $weight, $date);
         if ($stmt->execute()) {
             $msg = "Vitals recorded.";
         } else {
@@ -103,7 +114,7 @@ if (isset($_POST['update_vitals'])) {
     }
     else {
         $stmt = $conn->prepare("UPDATE vitals SET patient_id=?, bp=?, hr=?, temp=?, height=?, weight=?, date_taken=? WHERE id=?");
-        $stmt->bind_param("issssssi", $pid, $bp, $hr, $temp, $height, $weight, $date, $vid);
+        $stmt->bind_param("isddddsi", $pid, $bp, $hr, $temp, $height, $weight, $date, $vid);
         if ($stmt->execute()) {
             $msg = "Vitals updated.";
         } else {
@@ -115,11 +126,14 @@ if (isset($_POST['update_vitals'])) {
 
 if (isset($_GET['get_vital'])) {
     $id = intval($_GET['get_vital']);
-    $sql = "SELECT * FROM vitals WHERE id=$id";
-    $result = mysqli_query($conn, $sql);
-    if ($row = mysqli_fetch_assoc($result)) {
+    $stmt = $conn->prepare("SELECT * FROM vitals WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
         echo json_encode($row);
     }
+    $stmt->close();
     exit;
 }
 
@@ -250,14 +264,13 @@ include "header.php";
 
   <div class="card p-3">
     <table class="table table-sm table-bordered">
-      <thead><tr><th>ID</th><th>Patient</th><th>BP</th><th>HR</th><th>Temp</th><th>Height</th><th>Weight</th><th>Date</th><th>Action</th></tr></thead>
+      <thead><tr><th>Patient</th><th>BP</th><th>HR</th><th>Temp</th><th>Height</th><th>Weight</th><th>Date</th><th>Action</th></tr></thead>
       <tbody>
       <?php
       $sql = "SELECT v.id, v.patient_id, p.fullname, v.bp, v.hr, v.temp, v.height, v.weight, v.date_taken FROM vitals v JOIN patients p ON v.patient_id=p.id ORDER BY v.date_taken DESC";
       $res = $conn->query($sql);
       while ($r = $res->fetch_assoc()): ?>
         <tr>
-          <td><?php echo $r['id'];?></td>
           <td><?php echo htmlspecialchars($r['fullname']);?></td>
           <td><?php echo htmlspecialchars($r['bp']);?></td>
           <td><?php echo htmlspecialchars($r['hr']);?></td>

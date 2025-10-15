@@ -352,11 +352,12 @@ include "header.php";
                                                 data-patient='<?php echo htmlspecialchars(json_encode(array_merge($r, $medical_data)), ENT_QUOTES); ?>' title="Summary">
                                             <i class="bi bi-eye"></i>
                                         </button>
-                                        <a class="btn btn-outline-danger" 
-                                           href="patients.php?delete=<?php echo $r['id']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>" 
+                                        <a class="btn btn-outline-danger"
+                                           href="patients.php?delete=<?php echo $r['id']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>"
                                            onclick="return confirm('Delete patient and all related records?')" title="Delete">
                                             <i class="bi bi-trash"></i>
                                         </a>
+                                        <a class="btn btn-outline-secondary" href="patient_dashboard.php?patient_id=<?php echo $r['id']; ?>" title="Record">Record</a>
                                     </div>
                                 </td>
                             </tr>

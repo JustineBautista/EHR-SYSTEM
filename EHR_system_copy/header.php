@@ -49,7 +49,7 @@ require_once 'db.php';
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1030;
+            z-index: 1030;  
             border-radius: 0 0 1rem 1rem;
         }
 
