@@ -24,7 +24,7 @@ if (!isset($_SESSION['csrf_token'])) {
 
 // Enhanced input sanitization function
 function sanitize_input($conn, $data) {
-    return mysqli_real_escape_string($conn, trim(htmlspecialchars($data, ENT_QUOTES, 'UTF-8')));
+    return trim($data);
 }
 
 // Validate date format
@@ -33,6 +33,15 @@ function validate_date($date) {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) return false;
     if (strtotime($date) > time()) return false; // No future dates
     return true;
+}
+
+// Calculate age from DOB
+function calculate_age($dob) {
+    if (empty($dob)) return 'N/A';
+    $birthDate = new DateTime($dob);
+    $today = new DateTime('today');
+    $age = $birthDate->diff($today)->y;
+    return $age;
 }
 
 // Add patient with enhanced validation
@@ -44,6 +53,7 @@ if (isset($_POST['add_patient'])) {
         $name = sanitize_input($conn, $_POST['name'] ?? "");
         $dob = sanitize_input($conn, $_POST['dob'] ?? "");
         $gender = sanitize_input($conn, $_POST['gender'] ?? "");
+        $age = sanitize_input($conn, $_POST['age'] ?? "");
         $contact = sanitize_input($conn, $_POST['contact'] ?? "");
         $address = sanitize_input($conn, $_POST['address'] ?? "");
         $history = sanitize_input($conn, $_POST['history'] ?? "");
@@ -67,15 +77,16 @@ if (isset($_POST['add_patient'])) {
             } else {
                 $check_stmt->close();
                 
-                $stmt = $conn->prepare("INSERT INTO patients (fullname, dob, gender, contact, address, history) VALUES (?,?,?,?,?,?)");
-                if ($stmt && $stmt->bind_param("ssssss", $name, $dob, $gender, $contact, $address, $history) && $stmt->execute()) {
+                $stmt = $conn->prepare("INSERT INTO patients (fullname, dob, gender, age, contact, address, history) VALUES (?,?,?,?,?,?,?)");
+                if ($stmt && $stmt->bind_param("sssssss", $name, $dob, $gender, $age, $contact, $address, $history) && $stmt->execute()) {
                     $patient_id = $conn->insert_id;
-                    
+
                     // Log audit trail
                     $new_values = [
                         'fullname' => $name,
                         'dob' => $dob,
                         'gender' => $gender,
+                        'age' => $age,
                         'contact' => $contact,
                         'address' => $address,
                         'history' => $history
@@ -104,6 +115,7 @@ if (isset($_POST['update_patient'])) {
         $name = sanitize_input($conn, $_POST['name'] ?? "");
         $dob = sanitize_input($conn, $_POST['dob'] ?? "");
         $gender = sanitize_input($conn, $_POST['gender'] ?? "");
+        $age = sanitize_input($conn, $_POST['age'] ?? "");
         $contact = sanitize_input($conn, $_POST['contact'] ?? "");
         $address = sanitize_input($conn, $_POST['address'] ?? "");
         $history = sanitize_input($conn, $_POST['history'] ?? "");
@@ -119,13 +131,14 @@ if (isset($_POST['update_patient'])) {
             // Get old values for audit trail
             $old_values = get_record_values($conn, 'patients', $id);
             
-            $stmt = $conn->prepare("UPDATE patients SET fullname=?, dob=?, gender=?, contact=?, address=?, history=? WHERE id=?");
-            if ($stmt && $stmt->bind_param("ssssssi", $name, $dob, $gender, $contact, $address, $history, $id) && $stmt->execute()) {
+            $stmt = $conn->prepare("UPDATE patients SET fullname=?, dob=?, gender=?, age=?, contact=?, address=?, history=? WHERE id=?");
+            if ($stmt && $stmt->bind_param("sssssssi", $name, $dob, $gender, $age, $contact, $address, $history, $id) && $stmt->execute()) {
                 // Log audit trail
                 $new_values = [
                     'fullname' => $name,
                     'dob' => $dob,
                     'gender' => $gender,
+                    'age' => $age,
                     'contact' => $contact,
                     'address' => $address,
                     'history' => $history
@@ -239,16 +252,22 @@ include "header.php";
                     
                     <div class="col-md-6">
                         <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
-                        <input class="form-control" id="name" name="name" placeholder="Full name" required maxlength="100" 
+                        <input class="form-control" id="name" name="name" placeholder="Full name" required maxlength="100"
                                value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['fullname']) : ''; ?>">
                     </div>
-                    
-                    <div class="col-md-3">
+
+                    <div class="col-md-2">
                         <label for="dob" class="form-label">Date of Birth</label>
                         <input class="form-control" id="dob" name="dob" type="date" max="<?php echo date('Y-m-d'); ?>"
                                value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['dob']) : ''; ?>">
                     </div>
-                    
+
+                    <div class="col-md-1">
+                        <label for="age" class="form-label">Age</label>
+                        <input class="form-control" id="age" name="age" placeholder="Age" type="number" min="0" max="150"
+                               value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['age']) : ''; ?>">
+                    </div>
+
                     <div class="col-md-3">
                         <label for="gender" class="form-label">Gender</label>
                         <select name="gender" id="gender" class="form-select">
@@ -311,8 +330,9 @@ include "header.php";
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>DOB</th>
+                                <th>Age</th>
                                 <th>Gender</th>
-                                <th>Contact</th>    
+                                <th>Contact</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -321,16 +341,25 @@ include "header.php";
                         $res = $conn->query("SELECT * FROM patients ORDER BY fullname");
                         if ($res && $res->num_rows > 0):
                             while ($r = $res->fetch_assoc()):
+                                // Decode HTML entities in history
+                                $r['history'] = html_entity_decode($r['history'], ENT_QUOTES);
                                 // Fetch additional medical data with prepared statements
                                 $medical_data = [];
                                 $tables = ['medical_history', 'medications', 'vitals', 'diagnostics', 'treatment_plans', 'lab_results', 'progress_notes'];
-                                
+
                                 foreach ($tables as $table) {
                                     $stmt = $conn->prepare("SELECT * FROM `$table` WHERE patient_id = ?");
                                     if ($stmt && $stmt->bind_param("i", $r['id']) && $stmt->execute()) {
                                         $result = $stmt->get_result();
                                         $medical_data[$table] = [];
                                         while ($row = $result->fetch_assoc()) {
+                                            // Decode HTML entities in notes fields if present
+                                            if (isset($row['notes'])) {
+                                                $row['notes'] = html_entity_decode($row['notes'], ENT_QUOTES);
+                                            }
+                                            if (isset($row['note'])) {
+                                                $row['note'] = html_entity_decode($row['note'], ENT_QUOTES);
+                                            }
                                             $medical_data[$table][] = $row;
                                         }
                                         $stmt->close();
@@ -341,6 +370,7 @@ include "header.php";
                                 <td class="patient-id"><?php echo htmlspecialchars($r['id']); ?></td>
                                 <td class="patient-name"><?php echo htmlspecialchars($r['fullname']); ?></td>
                                 <td><?php echo htmlspecialchars($r['dob'] ?: 'N/A'); ?></td>
+                                <td><?php echo htmlspecialchars($r['age'] ?: 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($r['gender'] ?: 'N/A'); ?></td>
                                 <td><?php echo htmlspecialchars($r['contact'] ?: 'N/A'); ?></td>
                                 <td>
@@ -348,7 +378,7 @@ include "header.php";
                                         <a class="btn btn-outline-primary" href="patients.php?edit=<?php echo $r['id']; ?>" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#summaryModal" 
+                                        <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#summaryModal"
                                                 data-patient='<?php echo htmlspecialchars(json_encode(array_merge($r, $medical_data)), ENT_QUOTES); ?>' title="Summary">
                                             <i class="bi bi-eye"></i>
                                         </button>
@@ -366,7 +396,7 @@ include "header.php";
                         else:
                         ?>
                             <tr>
-                                <td colspan="6" class="text-center text-muted">No patients found.</td>
+                                <td colspan="7" class="text-center text-muted">No patients found.</td>
                             </tr>
                         <?php endif; ?>
                         </tbody>
@@ -393,7 +423,7 @@ include "header.php";
                     <div class="col-md-6">
                         <div class="card h-100">
                             <div class="card-header">
-                                <h6 class="mb-0">Personal Information</h6>
+                                <h6 class="mb-0">Patients Demographics</h6>
                             </div>
                             <div class="card-body">
                                 <div id="personalInfo"></div>
@@ -437,17 +467,38 @@ document.addEventListener('DOMContentLoaded', function() {
         form.addEventListener('submit', function(e) {
             const name = document.getElementById('name').value.trim();
             const dob = document.getElementById('dob').value;
-            
+
             if (name.length < 2) {
                 e.preventDefault();
                 alert('Patient name must be at least 2 characters long.');
                 return;
             }
-            
+
             if (dob && new Date(dob) > new Date()) {
                 e.preventDefault();
                 alert('Date of birth cannot be in the future.');
                 return;
+            }
+        });
+    }
+
+    // Auto-calculate age when DOB changes
+    const dobInput = document.getElementById('dob');
+    const ageInput = document.getElementById('age');
+    if (dobInput && ageInput) {
+        dobInput.addEventListener('change', function() {
+            const dob = this.value;
+            if (dob) {
+                const birthDate = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                ageInput.value = age;
+            } else {
+                ageInput.value = '';
             }
         });
     }
@@ -459,11 +510,25 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
     var button = event.relatedTarget;
     var patientData = JSON.parse(button.getAttribute('data-patient'));
     
+    // Function to calculate age from DOB
+    function calculateAge(dob) {
+        if (!dob) return 'N/A';
+        var birthDate = new Date(dob);
+        var today = new Date();
+        var age = today.getFullYear() - birthDate.getFullYear();
+        var monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
+
     // Personal Information
     var personalInfo = `
         <p><strong>ID:</strong> ${patientData.id}</p>
         <p><strong>Name:</strong> ${patientData.fullname}</p>
         <p><strong>Date Of Birth:</strong> ${patientData.dob || 'N/A'}</p>
+        <p><strong>Age:</strong> ${patientData.age || 'N/A'}</p>
         <p><strong>Gender:</strong> ${patientData.gender || 'N/A'}</p>
         <p><strong>Contact:</strong> ${patientData.contact || 'N/A'}</p>
         <p><strong>Address:</strong> ${patientData.address || 'N/A'}</p>

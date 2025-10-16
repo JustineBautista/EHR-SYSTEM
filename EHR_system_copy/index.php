@@ -72,11 +72,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #e0e7ff 100%);
-      height: 100vh;
+      /*background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #e0e7ff 100%);*/
+      background:url("IMAGES/aurora_bg.png") center/cover no-repeat;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      height:100vh;
     }
 
     /* Animated background particles */
@@ -105,6 +106,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       padding: 1.25rem 2rem;
       box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+      width: 97%;
+      margin:0.50rem 2rem 0.50rem 2rem;
+      border-radius:50px;
       position: relative;
       z-index: 10;
       animation: slideDown 0.8s ease-out;
@@ -152,7 +156,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     .header-logo-wrapper {
-      background: rgba(255, 255, 255, 0.95);
+      background: #10b981;
       padding: 0.75rem;
       border-radius: 16px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
@@ -226,7 +230,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     /* Side Cards */
     .info-card {
-      background: white;
+      /*background: white;*/
+      background-color:rgba(0,0,0,0.8);
       border-radius: 24px;
       padding: 0;
       max-width: 320px;
@@ -307,7 +312,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     .info-card-content {
       padding: 1.25rem;
-      color: #374151;
+      /*color: #374151;*/
+      color:#ffffff;
       line-height: 1.6;
       text-align: justify;
       font-size: 0.85rem;
@@ -333,27 +339,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     .login-card {
-      background: white;
+      /*background: white;*/
       border-radius: 28px;
+      background-color:rgba(0,0,0,0.8);
       padding: 2.5rem;
       box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
-      transition: all 0.4s ease;
+      transition: all 0.4s ease;ity:0.7;
       border: 2px solid rgba(16, 185, 129, 0.15);
       position: relative;
       overflow: hidden;
     }
 
-    .login-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-      background-size: 200% 100%;
-      animation: gradientMove 3s ease infinite;
-    }
+
 
     @keyframes gradientMove {
       0%, 100% { background-position: 0% 50%; }
@@ -387,7 +384,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     .login-title h2 {
       font-size: 1.6rem;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: linear-gradient(135deg,rgb(32, 239, 170) 0%,rgb(235, 239, 238) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -396,7 +393,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     .login-title p {
-      color: #6b7280;
+      /*color: #6b7280;*/
+      color:white;
       font-size: 0.9rem;
     }
 
@@ -431,7 +429,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     .form-label {
       display: block;
       margin-bottom: 0.4rem;
-      color: #374151;
+      /*color: #374151;*/
+      color:#ffffff;
       font-weight: 600;
       font-size: 0.85rem;
     }
@@ -583,6 +582,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       .header-logo-wrapper {
         padding: 0.75rem;
+        
       }
 
       .header-logo {
@@ -673,7 +673,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="login-container">
       <div class="login-card">
         <img src="IMAGES/aurora.png" alt="Aurora Logo" class="login-logo">
-        
         <div class="login-title">
           <h2>Welcome Back</h2>
           <p>Please login to access the admin dashboard</p>

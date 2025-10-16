@@ -17,9 +17,10 @@ CREATE TABLE IF NOT EXISTS patients (
   fullname VARCHAR(150),
   dob DATE,
   gender VARCHAR(20),
+  age INT(2),
   contact VARCHAR(50),
   address VARCHAR(255),
-  history TEXT
+  history VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- medical_history
@@ -90,6 +91,7 @@ CREATE TABLE IF NOT EXISTS lab_results (
 CREATE TABLE IF NOT EXISTS progress_notes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
+  focus TEXT,
   note TEXT,
   author VARCHAR(100),
   date_written DATETIME,

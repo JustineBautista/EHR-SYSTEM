@@ -52,9 +52,10 @@ foreach ($tables as $table) {
     }
 }
 
-// Vitals processing (adapted from vitals.php)
 $msg = "";
 $error = "";
+
+// Vitals processing (adapted from vitals.php)
 
 if (isset($_POST['add_vitals'])) {
     $bp = $_POST['bp'] ?? "";
@@ -288,6 +289,206 @@ if (isset($_GET['get_med'])) {
     exit;
 }
 
+// Progress Notes processing (adapted from progress_notes.php)
+if (isset($_POST['add_progress_note'])) {
+    $focus = $_POST['focus'] ?? "";
+    $note = $_POST['note'] ?? "";
+    $author = $_POST['author'] ?? "";
+    $date = $_POST['date'] ?: date("Y-m-d");
+
+    // Validate note (required)
+    if (empty($note)) {
+        $error = "Note is required.";
+    }
+    else {
+        $stmt = $conn->prepare("INSERT INTO progress_notes (patient_id, focus, note, author, date_written) VALUES (?,?,?,?,?)");
+        $stmt->bind_param("issss", $patient_id, $focus, $note, $author, $date);
+        if ($stmt->execute()) {
+            $msg = "Progress note added.";
+            // Refresh medical_data for progress_notes
+            $stmt = $conn->prepare("SELECT * FROM progress_notes WHERE patient_id = ? ORDER BY id DESC");
+            $stmt->bind_param("i", $patient_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $medical_data['progress_notes'] = [];
+            while ($row = $result->fetch_assoc()) {
+                $medical_data['progress_notes'][] = $row;
+            }
+            $stmt->close();
+        } else {
+            $error = "Database error: " . $stmt->error;
+        }
+    }
+}
+
+if (isset($_GET['delete_progress_note'])) {
+    $id = intval($_GET['delete_progress_note']);
+    $stmt = $conn->prepare("DELETE FROM progress_notes WHERE id=? AND patient_id=?");
+    $stmt->bind_param("ii", $id, $patient_id);
+    if ($stmt->execute()) $msg = "Deleted.";
+    $stmt->close();
+    // Refresh progress_notes data
+    $stmt = $conn->prepare("SELECT * FROM progress_notes WHERE patient_id = ? ORDER BY id DESC");
+    $stmt->bind_param("i", $patient_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $medical_data['progress_notes'] = [];
+    while ($row = $result->fetch_assoc()) {
+        $medical_data['progress_notes'][] = $row;
+    }
+    $stmt->close();
+}
+
+// Handle update progress notes
+if (isset($_POST['update_progress_note'])) {
+    $nid = intval($_POST['note_id']);
+    $focus = $_POST['focus'] ?? "";
+    $note = $_POST['note'] ?? "";
+    $author = $_POST['author'] ?? "";
+    $date = $_POST['date'] ?: date("Y-m-d");
+
+    // Validate note (required)
+    if (empty($note)) {
+        $error = "Note is required.";
+    }
+    else {
+        $stmt = $conn->prepare("UPDATE progress_notes SET focus=?, note=?, author=?, date_written=? WHERE id=? AND patient_id=?");
+        $stmt->bind_param("sssii", $focus, $note, $author, $date, $nid, $patient_id);
+        if ($stmt->execute()) {
+            $msg = "Progress note updated.";
+        } else {
+            $error = "Database error: " . $stmt->error;
+        }
+        $stmt->close();
+        // Refresh progress_notes data
+        $stmt = $conn->prepare("SELECT * FROM progress_notes WHERE patient_id = ? ORDER BY id DESC");
+        $stmt->bind_param("i", $patient_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $medical_data['progress_notes'] = [];
+        while ($row = $result->fetch_assoc()) {
+            $medical_data['progress_notes'][] = $row;
+        }
+        $stmt->close();
+    }
+}
+
+if (isset($_GET['get_progress_note'])) {
+    $id = intval($_GET['get_progress_note']);
+    $stmt = $conn->prepare("SELECT * FROM progress_notes WHERE id=? AND patient_id=?");
+    $stmt->bind_param("ii", $id, $patient_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        echo json_encode($row);
+    }
+    $stmt->close();
+    exit;
+}
+
+// Diagnostics processing (adapted from diagnostics.php)
+if (isset($_POST['add_diagnostic'])) {
+    $problem = $_POST['problem'] ?? "";
+    $diagnosis = $_POST['diagnosis'] ?? "";
+    $date = $_POST['date'] ?: date("Y-m-d");
+
+    // Validate problem (required)
+    if (empty($problem)) {
+        $error = "Problem is required.";
+    }
+    // Validate diagnosis (required)
+    elseif (empty($diagnosis)) {
+        $error = "Diagnosis is required.";
+    }
+    else {
+        $stmt = $conn->prepare("INSERT INTO diagnostics (patient_id, problem, diagnosis, date_diagnosed) VALUES (?,?,?,?)");
+        $stmt->bind_param("isss", $patient_id, $problem, $diagnosis, $date);
+        if ($stmt->execute()) {
+            $msg = "Diagnostic added.";
+            // Refresh medical_data for diagnostics
+            $stmt = $conn->prepare("SELECT * FROM diagnostics WHERE patient_id = ? ORDER BY id DESC");
+            $stmt->bind_param("i", $patient_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $medical_data['diagnostics'] = [];
+            while ($row = $result->fetch_assoc()) {
+                $medical_data['diagnostics'][] = $row;
+            }
+            $stmt->close();
+        } else {
+            $error = "Database error: " . $stmt->error;
+        }
+    }
+}
+
+if (isset($_GET['delete_diagnostic'])) {
+    $id = intval($_GET['delete_diagnostic']);
+    $stmt = $conn->prepare("DELETE FROM diagnostics WHERE id=? AND patient_id=?");
+    $stmt->bind_param("ii", $id, $patient_id);
+    if ($stmt->execute()) $msg = "Deleted.";
+    $stmt->close();
+    // Refresh diagnostics data
+    $stmt = $conn->prepare("SELECT * FROM diagnostics WHERE patient_id = ? ORDER BY id DESC");
+    $stmt->bind_param("i", $patient_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $medical_data['diagnostics'] = [];
+    while ($row = $result->fetch_assoc()) {
+        $medical_data['diagnostics'][] = $row;
+    }
+    $stmt->close();
+}
+
+// Handle update diagnostics
+if (isset($_POST['update_diagnostic'])) {
+    $did = intval($_POST['diagnostic_id']);
+    $problem = $_POST['problem'] ?? "";
+    $diagnosis = $_POST['diagnosis'] ?? "";
+    $date = $_POST['date'] ?: date("Y-m-d");
+
+    // Validate problem (required)
+    if (empty($problem)) {
+        $error = "Problem is required.";
+    }
+    // Validate diagnosis (required)
+    elseif (empty($diagnosis)) {
+        $error = "Diagnosis is required.";
+    }
+    else {
+        $stmt = $conn->prepare("UPDATE diagnostics SET problem=?, diagnosis=?, date_diagnosed=? WHERE id=? AND patient_id=?");
+        $stmt->bind_param("sssii", $problem, $diagnosis, $date, $did, $patient_id);
+        if ($stmt->execute()) {
+            $msg = "Diagnostic updated.";
+        } else {
+            $error = "Database error: " . $stmt->error;
+        }
+        $stmt->close();
+        // Refresh diagnostics data
+        $stmt = $conn->prepare("SELECT * FROM diagnostics WHERE patient_id = ? ORDER BY id DESC");
+        $stmt->bind_param("i", $patient_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $medical_data['diagnostics'] = [];
+        while ($row = $result->fetch_assoc()) {
+            $medical_data['diagnostics'][] = $row;
+        }
+        $stmt->close();
+    }
+}
+
+if (isset($_GET['get_diagnostic'])) {
+    $id = intval($_GET['get_diagnostic']);
+    $stmt = $conn->prepare("SELECT * FROM diagnostics WHERE id=? AND patient_id=?");
+    $stmt->bind_param("ii", $id, $patient_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        echo json_encode($row);
+    }
+    $stmt->close();
+    exit;
+}
+
 include "header.php";
 ?>
 
@@ -418,6 +619,44 @@ include "header.php";
     </div>
 </div>
 
+<!-- Edit Modal for Progress Notes -->
+<div class="modal fade" id="editProgressNoteModal" tabindex="-1" aria-labelledby="editProgressNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="editProgressNoteForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProgressNoteModalLabel">Edit Progress Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="note_id" id="note_id">
+                    <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
+                    <div class="mb-3">
+                        <label for="focus" class="form-label">Focus</label>
+                        <input type="text" class="form-control" name="focus" id="focus" placeholder="Focus">
+                    </div>
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Note</label>
+                        <textarea class="form-control" name="note" id="note" placeholder="Note" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="author" class="form-label">Author</label>
+                        <input type="text" class="form-control" name="author" id="author" placeholder="Author">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" name="date" id="date" placeholder="YYYY-MM-DD">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_progress_note" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid mt-4">
     <div class="row">
         <!-- Sidebar for EHR Modules -->
@@ -434,12 +673,12 @@ include "header.php";
                     <button onclick="showSection('medications')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-capsule me-2"></i>Enter Medications
                     </button>
-                    <a href="progress_notes.php?patient_id=<?php echo $patient_id; ?>" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('diagnostics')" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="bi bi-search me-2"></i>Enter Diagnostics
+                    </button>
+                    <button onclick="showSection('progress_notes')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-pencil-square me-2"></i>Progress Notes
-                    </a>
-                    <a href="diagnostics.php?patient_id=<?php echo $patient_id; ?>" class="btn btn-outline-primary w-100 mb-2">
-                        <i class="bi bi-search me-2"></i>Diagnostics
-                    </a>
+                    </button>
                     <a href="treatment_plans.php?patient_id=<?php echo $patient_id; ?>" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-journal-text me-2"></i>Treatment Plans
                     </a>
@@ -495,7 +734,7 @@ include "header.php";
                                 ['key' => 'diagnostics', 'title' => 'Diagnostics', 'fields' => ['problem', 'diagnosis', 'date_diagnosed'], 'icon' => 'bi-search'],
                                 ['key' => 'treatment_plans', 'title' => 'Treatment Plans', 'fields' => ['plan', 'notes', 'date_planned'], 'icon' => 'bi-journal-text'],
                                 ['key' => 'lab_results', 'title' => 'Lab Results', 'fields' => ['test_name', 'test_result', 'date_taken'], 'icon' => 'bi-test-tube'],
-                                ['key' => 'progress_notes', 'title' => 'Progress Notes', 'fields' => ['note', 'author', 'date_written'], 'icon' => 'bi-pencil-square']
+                                ['key' => 'progress_notes', 'title' => 'Progress Notes', 'fields' => ['focus', 'note', 'author', 'date_written'], 'icon' => 'bi-pencil-square']
                             ];
 
                             foreach ($recordTypes as $recordType) {
@@ -565,7 +804,7 @@ include "header.php";
 
                         <!-- Vitals Form (adapted, patient fixed) -->
                         <div class="card p-3 mb-3">
-                            <form method="post" class="row g-2">
+                            <form method="post" action="?patient_id=<?php echo $patient_id; ?>&section=vitals" class="row g-2">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                                 <div class="col-md-2"><input class="form-control" name="bp" placeholder="BP (e.g., 120/80)" value="<?php echo htmlspecialchars($_POST['bp'] ?? ''); ?>" required></div>
                                 <div class="col-md-2"><input type="number" class="form-control" name="hr" placeholder="HR (bpm)" value="<?php echo htmlspecialchars($_POST['hr'] ?? ''); ?>" required></div>
@@ -640,7 +879,7 @@ include "header.php";
 
                         <!-- Medications Form -->
                         <div class="card p-3 mb-3">
-                            <form method="post" class="row g-2">
+                            <form method="post" action="?patient_id=<?php echo $patient_id; ?>&section=medications" class="row g-2">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                                 <div class="col-md-3"><input class="form-control" name="medication" placeholder="Medication" value="<?php echo htmlspecialchars($_POST['medication'] ?? ''); ?>" required></div>
                                 <div class="col-md-3"><input class="form-control" name="dose" placeholder="Dose" value="<?php echo htmlspecialchars($_POST['dose'] ?? ''); ?>"></div>
@@ -672,10 +911,145 @@ include "header.php";
                                             <td><?php echo htmlspecialchars($r['start_date']); ?></td>
                                             <td><?php echo htmlspecialchars($r['notes']); ?></td>
                                             <td>
-                                                <a class="btn btn-sm btn-danger" href="?delete_med=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>" onclick="return confirm('Delete?')">
+                                                <a class="btn btn-sm btn-danger" href="?delete_med=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>&section=medications" onclick="return confirm('Delete?')">
                                                     <i class="bi bi-trash"></i> Delete
                                                 </a>
                                                 <a class="btn btn-sm btn-warning" href="#" onclick="editMed(<?php echo $r['id']; ?>)">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <button class="btn btn-secondary mt-3" onclick="showSection('default')">Back to Dashboard</button>
+                    </div>
+
+                    <!-- Progress Notes Section (Hidden by default) -->
+                    <div id="progress_notes-content" style="display: none;">
+                        <h4>Progress Notes</h4>
+
+                        <!-- Feedback messages for progress notes -->
+                        <?php if (!empty($msg)): ?>
+                            <div class="alert alert-success alert-dismissible fade show">
+                                <?php echo htmlspecialchars($msg); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($error)): ?>
+                            <div class="alert alert-danger alert-dismissible fade show">
+                                <?php echo htmlspecialchars($error); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Progress Notes Form -->
+                        <div class="card p-3 mb-3">
+                            <form method="post" action="?patient_id=<?php echo $patient_id; ?>&section=progress_notes" class="row g-2">
+                                <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
+                                <div class="col-md-3"><input class="form-control" name="focus" placeholder="Focus" value="<?php echo htmlspecialchars($_POST['focus'] ?? ''); ?>"></div>
+                                <div class="col-md-3"><textarea class="form-control" name="note" placeholder="Progress Note" required><?php echo htmlspecialchars($_POST['note'] ?? ''); ?></textarea></div>
+                                <div class="col-md-3"><input class="form-control" name="author" placeholder="Author" value="<?php echo htmlspecialchars($_POST['author'] ?? ''); ?>"></div>
+                                <div class="col-md-3"><input class="form-control" name="date" placeholder="Date (YYYY-MM-DD)" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>"></div>
+                                <div class="col-12"><button name="add_progress_note" class="btn btn-primary">Add Progress Note</button></div>
+                            </form>
+                        </div>
+
+                        <!-- Progress Notes Table -->
+                        <div class="card p-3">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Focus</th>
+                                        <th>Note</th>
+                                        <th>Author</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $progress_notes = $medical_data['progress_notes'] ?? [];
+                                    foreach ($progress_notes as $r): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($r['focus']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['note']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['author']); ?></td>
+                                            <td><?php echo htmlspecialchars(substr($r['date_written'], 0, 10)); ?></td>
+                                            <td>
+                                                <a class="btn btn-sm btn-danger" href="?delete_progress_note=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>&section=progress_notes" onclick="return confirm('Delete?')">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </a>
+                                                <a class="btn btn-sm btn-warning" href="#" onclick="editProgressNote(<?php echo $r['id']; ?>)">
+                                                    <i class="bi bi-pencil"></i> Edit
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <button class="btn btn-secondary mt-3" onclick="showSection('default')">Back to Dashboard</button>
+                    </div>
+
+                    <!-- Diagnostics Section (Hidden by default) -->
+                    <div id="diagnostics-content" style="display: none;">
+                        <h4>Diagnostics</h4>
+
+                        <!-- Feedback messages for diagnostics -->
+                        <?php if (!empty($msg)): ?>
+                            <div class="alert alert-success alert-dismissible fade show">
+                                <?php echo htmlspecialchars($msg); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($error)): ?>
+                            <div class="alert alert-danger alert-dismissible fade show">
+                                <?php echo htmlspecialchars($error); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Diagnostics Form -->
+                        <div class="card p-3 mb-3">
+                            <form method="post" action="?patient_id=<?php echo $patient_id; ?>&section=diagnostics" class="row g-2">
+                                <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
+                                <div class="col-md-4"><input class="form-control" name="problem" placeholder="Problem" value="<?php echo htmlspecialchars($_POST['problem'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"><input class="form-control" name="diagnosis" placeholder="Diagnosis" value="<?php echo htmlspecialchars($_POST['diagnosis'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"><input class="form-control" name="date" placeholder="Date (YYYY-MM-DD)" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>"></div>
+                                <div class="col-12"><button name="add_diagnostic" class="btn btn-primary">Add Diagnostic</button></div>
+                            </form>
+                        </div>
+
+                        <!-- Diagnostics Table -->
+                        <div class="card p-3">
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Problem</th>
+                                        <th>Diagnosis</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    $diagnostics = $medical_data['diagnostics'] ?? [];
+                                    foreach ($diagnostics as $r): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($r['problem']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['diagnosis']); ?></td>
+                                            <td><?php echo htmlspecialchars(substr($r['date_diagnosed'], 0, 10)); ?></td>
+                                            <td>
+                                                <a class="btn btn-sm btn-danger" href="?delete_diagnostic=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>&section=diagnostics" onclick="return confirm('Delete?')">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </a>
+                                                <a class="btn btn-sm btn-warning" href="#" onclick="editDiagnostic(<?php echo $r['id']; ?>)">
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </a>
                                             </td>
@@ -694,6 +1068,8 @@ include "header.php";
                         document.getElementById('default-content').style.display = 'none';
                         document.getElementById('vitals-content').style.display = 'none';
                         document.getElementById('medications-content').style.display = 'none';
+                        document.getElementById('progress_notes-content').style.display = 'none';
+                        document.getElementById('diagnostics-content').style.display = 'none';
                         // Show selected
                         if (section === 'default') {
                             document.getElementById('default-content').style.display = 'block';
@@ -701,6 +1077,10 @@ include "header.php";
                             document.getElementById('vitals-content').style.display = 'block';
                         } else if (section === 'medications') {
                             document.getElementById('medications-content').style.display = 'block';
+                        } else if (section === 'progress_notes') {
+                            document.getElementById('progress_notes-content').style.display = 'block';
+                        } else if (section === 'diagnostics') {
+                            document.getElementById('diagnostics-content').style.display = 'block';
                         }
                     }
 
@@ -730,6 +1110,20 @@ include "header.php";
                                 document.getElementById('start_date').value = data.start_date;
                                 document.getElementById('notes').value = data.notes;
                                 new bootstrap.Modal(document.getElementById('editMedModal')).show();
+                            })
+                            .catch(error => console.error('Error:', error));
+                    }
+
+                    function editProgressNote(id) {
+                        fetch('?get_progress_note=' + id)
+                            .then(response => response.json())
+                            .then(data => {
+                                document.getElementById('note_id').value = data.id;
+                                document.getElementById('focus').value = data.focus;
+                                document.getElementById('note').value = data.note;
+                                document.getElementById('author').value = data.author;
+                                document.getElementById('date').value = data.date_written;
+                                new bootstrap.Modal(document.getElementById('editProgressNoteModal')).show();
                             })
                             .catch(error => console.error('Error:', error));
                     }
