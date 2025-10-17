@@ -210,7 +210,8 @@ include "header.php";
     
     .table-responsive {
         border-radius: 0.5rem;
-        overflow: hidden;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 </style>
 
