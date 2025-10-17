@@ -22,7 +22,7 @@ if (!isset($_SESSION['csrf_token'])) {
 
 // Enhanced input sanitization
 function sanitize_input($conn, $data) {
-    return mysqli_real_escape_string($conn, trim($data));
+    return mysqli_real_escape_string($conn, trim(htmlspecialchars($data, ENT_QUOTES, 'UTF-8')));
 }
 
 // Add patient with better validation
@@ -34,7 +34,6 @@ if (isset($_POST['add_patient'])) {
         $name = sanitize_input($conn, $_POST['name'] ?? "");
         $dob = sanitize_input($conn, $_POST['dob'] ?? "");
         $gender = sanitize_input($conn, $_POST['gender'] ?? "");
-        $age = sanitize_input($conn, $_POST['age'] ?? "");
         $contact = sanitize_input($conn, $_POST['contact'] ?? "");
         $address = sanitize_input($conn, $_POST['address'] ?? "");
         $history = sanitize_input($conn, $_POST['history'] ?? "");
@@ -60,12 +59,12 @@ if (isset($_POST['add_patient'])) {
             } else {
                 $check_stmt->close();
                 
-                $stmt = $conn->prepare("INSERT INTO patients (fullname, dob, gender, age, contact, address, history) VALUES (?,?,?,?,?,?,?)");
-                if ($stmt && $stmt->bind_param("sssssss", $name, $dob, $gender, $age, $contact, $address, $history) && $stmt->execute()) {
+                $stmt = $conn->prepare("INSERT INTO patients (fullname, dob, gender, contact, address, history) VALUES (?,?,?,?,?,?)");
+                if ($stmt && $stmt->bind_param("ssssss", $name, $dob, $gender, $contact, $address, $history) && $stmt->execute()) {
                     $patient_id = $conn->insert_id;
-
+                    
                     // Log audit trail
-                    $new_values = compact('name', 'dob', 'gender', 'age', 'contact', 'address', 'history');
+                    $new_values = compact('name', 'dob', 'gender', 'contact', 'address', 'history');
                     log_audit($conn, 'INSERT', 'patients', $patient_id, $patient_id, null, $new_values);
                     
                     $msg = "✅ Patient added successfully.";
@@ -638,13 +637,6 @@ include "header.php";
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label for="age" class="form-label">Age</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                <input type="number" class="form-control" id="age" name="age" min="0" max="150" placeholder="Enter age">
               </div>
             </div>
             <div class="col-12">

@@ -562,7 +562,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     @media (max-width: 1200px) {
       .main-container {
         flex-direction: column;
-        padding: 2rem 1.5rem;
+        height:200%;
+        padding: 35rem 1.5rem 0 0;
       }
 
       .info-card {
