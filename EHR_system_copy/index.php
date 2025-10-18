@@ -13,36 +13,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = trim($_POST['password']);
 
     // Use prepared statement to prevent SQL injection
-    $stmt = $conn->prepare("SELECT id, password FROM admin WHERE username=?");
+    $stmt = $conn->prepare("SELECT id, password, session_id FROM admin WHERE username=?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $res = $stmt->get_result();
-    
+
     if ($res->num_rows === 1) {
         $user = $res->fetch_assoc();
-        
-        // Check if password is still in plain text (for backward compatibility)
-        if ($user['password'] === 'admin123') {
-            // This is the default password, let's verify and update it to hashed version
-            if ($password === 'admin123') {
-                // Update to hashed password
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $update_stmt = $conn->prepare("UPDATE admin SET password=? WHERE id=?");
-                $update_stmt->bind_param("si", $hashed_password, $user['id']);
+
+        // Check if user is already logged in from another device
+        if (!empty($user['session_id']) && $user['session_id'] !== session_id()) {
+            $error = "User is currently active on another device.";
+        } else {
+            // Check if password matches hashed version
+            if (password_verify($password, $user['password'])) {
+                // Update session_id to current session
+                $update_stmt = $conn->prepare("UPDATE admin SET session_id=? WHERE id=?");
+                $update_stmt->bind_param("si", session_id(), $user['id']);
                 $update_stmt->execute();
                 $update_stmt->close();
-                
+
                 // Set session and redirect
                 $_SESSION['admin'] = $username;
                 $_SESSION['admin_id'] = $user['id'];
                 header("Location: dashboard.php");
                 exit();
-            } else {
-                $error = "Invalid username or password.";
-            }
-        } else {
-            // Verify password against stored hash
-            if (password_verify($password, $user['password'])) {
+            } elseif ($password === $user['password']) {
+                // Password is in plain text (for backward compatibility), hash it and update
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $update_stmt = $conn->prepare("UPDATE admin SET password=?, session_id=? WHERE id=?");
+                $update_stmt->bind_param("ssi", $hashed_password, session_id(), $user['id']);
+                $update_stmt->execute();
+                $update_stmt->close();
+
+                // Set session and redirect
                 $_SESSION['admin'] = $username;
                 $_SESSION['admin_id'] = $user['id'];
                 header("Location: dashboard.php");
@@ -76,8 +80,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       background:url("IMAGES/aurora_bg.png") center/cover no-repeat;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      height:100vh;
+      overflow: auto;
+      min-height:100vh;
     }
 
     /* Animated background particles */
@@ -114,6 +118,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       animation: slideDown 0.8s ease-out;
       overflow: hidden;
       flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        width: 95%;
+        margin: 0.25rem 1rem;
+        padding: 1rem 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header {
+        width: 98%;
+        margin: 0.25rem 0.5rem;
+        padding: 0.75rem 1rem;
+      }
     }
 
     .header::before {
@@ -219,8 +239,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       position: relative;
       z-index: 1;
       animation: fadeIn 1s ease-out;
-      overflow-y: auto;
-      max-height: calc(100vh - 140px);
     }
 
     @keyframes fadeIn {
@@ -562,8 +580,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     @media (max-width: 1200px) {
       .main-container {
         flex-direction: column;
-        height:200%;
-        padding: 35rem 1.5rem 0 0;
+        padding: 1.5rem 1.5rem;
       }
 
       .info-card {
@@ -573,70 +590,102 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     @media (max-width: 768px) {
-      .header {
-        padding: 1.5rem 1rem;
-      }
-
       .header-content {
         gap: 1.5rem;
+        margi
       }
 
       .header-logo-wrapper {
-        padding: 0.75rem;
-        
+        padding: 0.5rem;
       }
 
       .header-logo {
-        height: 70px;
+        height: 50px;
       }
 
       .header-text h1 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
       }
 
       .header-text h2 {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
       }
 
-      .login-card {
-        padding: 2.5rem 2rem;
-      }
-
-      .info-card-content {
-        padding: 1.5rem;
-      }
-
-      .info-card-header {
-        padding: 1.5rem;
-      }
-
-      .info-card-header h3 {
-        font-size: 1.4rem;
-      }
-    }
-
-    @media (max-width: 480px) {
       .main-container {
-        padding: 1.5rem 1rem;
-        gap: 1.5rem;
+        padding-top: 5rem;
       }
 
       .login-card {
         padding: 2rem 1.5rem;
       }
 
+      .info-card-content {
+        padding: 1.25rem;
+      }
+
+      .info-card-header {
+        padding: 1rem;
+      }
+
+      .info-card-header h3 {
+        font-size: 1.3rem;
+      }
+
+    @media (max-width: 480px) {
+      .main-container {
+        padding: 1rem 0.5rem;
+        gap: 1rem;
+      }
+
+      .header-content {
+        gap: 1rem;
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .header-logo {
+        height: 40px;
+      }
+
+      .header-text {
+        min-width: auto;
+        padding: 0.5rem;
+      }
+
       .header-text h1 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
       }
 
       .header-text h2 {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+      }
+
+      .login-card {
+        padding: 1.5rem 1rem;
       }
 
       .login-title h2 {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
+      }
+
+      .info-card-content {
+        padding: 1rem;
+        font-size: 0.8rem;
+      }
+
+      .info-card-header {
+        padding: 0.75rem;
+      }
+
+      .info-card-header h3 {
+        font-size: 1.2rem;
+      }
+
+      .oliv {
+        cursor: pointer;
       }
     }
+  }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
@@ -645,7 +694,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <header class="header">
     <div class="header-content">
       <div class="header-logo-wrapper">
-        <img src="IMAGES/OCT_LOGO.png" alt="Olvarez College Tagaytay Logo" class="header-logo">
+        <a href="https://olivarezcollegetagaytay.edu.ph/"><img src="IMAGES/OCT_LOGO.png" alt="Olivarez College Tagaytay Logo" class="header-logo oliv"></a>
       </div>
       <div class="header-text">
         <h1>OLVAREZ COLLEGE TAGAYTAY</h1>
@@ -653,7 +702,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>College of Nursing and Health-Related Sciences</h2>
       </div>
       <div class="header-logo-wrapper">
-        <img src="IMAGES/NURSING_LOGO.png" alt="Nursing Department Logo" class="header-logo">
+        <a href="https://olivarezcollegetagaytay.edu.ph/"><img src="IMAGES/NURSING_LOGO.png" alt="Nursing Department Logo" class="header-logo oliv"></a>
       </div>
     </div>
   </header>
