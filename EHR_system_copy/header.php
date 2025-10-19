@@ -310,28 +310,6 @@ require_once 'db.php';
                     <li class="nav-item">
                         <a class="nav-link" href="patients.php"><i class="bi bi-people-fill me-1"></i>Patients</a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-clipboard2-pulse me-1"></i>Clinical
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="vitals.php">Vital Signs</a></li>
-                            <li><a class="dropdown-item" href="lab_results.php">Lab Results</a></li>
-                            <li><a class="dropdown-item" href="diagnostics.php">Diagnostics</a></li>
-                            <li><a class="dropdown-item" href="medications.php">Medications</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-journal-text me-1"></i>Records
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="medical_history.php">Medical History</a></li>
-                            <li><a class="dropdown-item" href="progress_notes.php">Progress Notes</a></li>
-                            <li><a class="dropdown-item" href="treatment_plans.php">Treatment Plans</a></li>
-                             <li><a class="dropdown-item" href="lab_diagnostic_results.php">Lab and Diagnostics Result </a></li>
-                        </ul>
-                    </li>
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
