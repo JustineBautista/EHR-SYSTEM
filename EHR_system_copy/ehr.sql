@@ -1,11 +1,11 @@
-CREATE DATABASE IF NOT EXISTS ehr;
-USE ehr;
+
 
 -- admin
 CREATE TABLE IF NOT EXISTS admin (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL,
-  password VARCHAR(255) NOT NULL
+  password VARCHAR(255) NOT NULL,
+  session_id VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Using a secure hashed password (this is the hash for 'admin123')
@@ -41,6 +41,10 @@ CREATE TABLE IF NOT EXISTS medications (
   dose VARCHAR(100),
   start_date DATE,
   notes TEXT,
+  route VARCHAR(100),
+  indication VARCHAR(200),
+  prescriber VARCHAR(100),
+  status VARCHAR(100),
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -92,8 +96,26 @@ CREATE TABLE IF NOT EXISTS progress_notes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
   note TEXT,
+  focus TEXT,
   author VARCHAR(100),
   date_written DATETIME,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- physical_assessments
+CREATE TABLE IF NOT EXISTS physical_assessments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT,
+  assessed_by VARCHAR(150),
+  head_and_neck TEXT,
+  cardiovascular TEXT,
+  respiratory TEXT,
+  Abdominal TEXT,
+  neurological TEXT,
+  musculoskeletal TEXT,
+  skin TEXT,
+  psychiatric TEXT,
+  date_assessed DATE,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -111,3 +133,4 @@ CREATE TABLE IF NOT EXISTS audit_trail (
   action_date DATETIME DEFAULT CURRENT_TIMESTAMP,
   ip_address VARCHAR(45)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

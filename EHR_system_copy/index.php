@@ -66,6 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=chevron_right" />
   <title>AURORA - EHR Admin Login</title>
   <style>
     * {
@@ -235,10 +236,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       align-items: center;
       justify-content: center;
       padding: 1.5rem 2rem;
-      gap: 2rem;
+      gap: 5rem;
       position: relative;
       z-index: 1;
-      animation: fadeIn 1s ease-out;
+      animation: fadeIn 2.5s ease-out;
     }
 
     @keyframes fadeIn {
@@ -309,7 +310,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       width: 200%;
       height: 200%;
       background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-      animation: shimmer 3s infinite;
+      animation: shimmer 5s infinite;
     }
 
     @keyframes shimmer {
@@ -343,6 +344,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       max-width: 420px;
       animation: scaleIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       flex-shrink: 0;
+      position: relative;
     }
 
     @keyframes scaleIn {
@@ -576,6 +578,51 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       display: none;
     }
 
+    /* Toggle Arrows */
+    .toggle-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(16, 185, 129, 0.9);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      z-index: 10;
+    }
+
+    .toggle-arrow:hover {
+      background: rgba(5, 150, 105, 1);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .toggle-arrow.left {
+      left: -45px;
+    }
+
+    .toggle-arrow.right {
+      right: -45px;
+    }
+
+    /* Hidden state for cards */
+    .info-card.hidden {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .info-card.visible {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    /* Arrows are always visible for toggling */
+
     /* Responsive Design */
     @media (max-width: 1200px) {
       .main-container {
@@ -587,12 +634,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         max-width: 100%;
         width: 100%;
       }
+
+      .toggle-arrow {
+        position: static;
+        margin: 0.5rem auto;
+        display: block;
+      }
     }
 
     @media (max-width: 768px) {
       .header-content {
         gap: 1.5rem;
-        margi
       }
 
       .header-logo-wrapper {
@@ -629,6 +681,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       .info-card-header h3 {
         font-size: 1.3rem;
+      }
+
+      .toggle-arrow.left {
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .toggle-arrow.right {
+        bottom: -60px;
+        left: 50%;
+        transform: translateX(-50%);
       }
 
     @media (max-width: 480px) {
@@ -688,6 +752,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const toggleMission = document.getElementById('toggle-mission');
+      const toggleVision = document.getElementById('toggle-vision');
+      const missionCard = document.querySelector('.info-card:first-of-type');
+      const visionCard = document.querySelector('.info-card:last-of-type');
+
+      toggleMission.addEventListener('click', function() {
+        if (missionCard.classList.contains('hidden')) {
+          missionCard.classList.remove('hidden');
+          missionCard.classList.add('visible');
+        } else {
+          missionCard.classList.remove('visible');
+          missionCard.classList.add('hidden');
+        }
+      });
+
+      toggleVision.addEventListener('click', function() {
+        if (visionCard.classList.contains('hidden')) {
+          visionCard.classList.remove('hidden');
+          visionCard.classList.add('visible');
+        } else {
+          visionCard.classList.remove('visible');
+          visionCard.classList.add('hidden');
+        }
+      });
+    });
+  </script>
 </head>
 <body>
   <!-- Header -->
@@ -697,7 +789,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <a href="https://olivarezcollegetagaytay.edu.ph/"><img src="IMAGES/OCT_LOGO.png" alt="Olivarez College Tagaytay Logo" class="header-logo oliv"></a>
       </div>
       <div class="header-text">
-        <h1>OLVAREZ COLLEGE TAGAYTAY</h1>
+        <h1>OLIVAREZ COLLEGE TAGAYTAY</h1>
         <div class="header-divider"></div>
         <h2>College of Nursing and Health-Related Sciences</h2>
       </div>
@@ -710,7 +802,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <!-- Main Content -->
   <main class="main-container">
     <!-- Mission Card -->
-    <div class="info-card">
+    <div class="info-card hidden">
       <div class="info-card-header">
         <h3>Mission</h3>
       </div>
@@ -721,6 +813,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- Login Card -->
     <div class="login-container">
+      <button class="toggle-arrow left" id="toggle-mission"><i class="fa-solid fa-chevron-up"></i></button>
       <div class="login-card">
         <img src="IMAGES/aurora.png" alt="Aurora Logo" class="login-logo">
         <div class="login-title">
@@ -758,10 +851,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </form>
 
       </div>
+      <button class="toggle-arrow right" id="toggle-vision"><i class="fa-solid fa-chevron-down"></i></button>
     </div>
-
+    
     <!-- Vision Card -->
-    <div class="info-card">
+    <div class="info-card hidden">
       <div class="info-card-header">
         <h3>Vision</h3>
       </div>

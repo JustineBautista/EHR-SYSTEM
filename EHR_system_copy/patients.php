@@ -501,13 +501,17 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
     recordTypes.forEach(function(recordType) {
         var records = patientData[recordType.key] || [];
         medicalRecords += `<h6 class="text-primary">${recordType.title} (${records.length})</h6>`;
-        
+
         if (records.length > 0) {
             records.slice(0, 3).forEach(function(record) { // Show only first 3 records
                 medicalRecords += '<div class="border-start border-3 border-primary ps-3 mb-2">';
                 recordType.fields.forEach(function(field) {
                     if (record[field]) {
                         var fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        // Change 'notes' to 'Frequency' for medications
+                        if (recordType.key === 'medications' && field === 'notes') {
+                            fieldName = 'Frequency';
+                        }
                         medicalRecords += `<small><strong>${fieldName}:</strong> ${record[field]}</small><br>`;
                     }
                 });
