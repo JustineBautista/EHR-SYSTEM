@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS medications (
   indication VARCHAR(200),
   prescriber VARCHAR(100),
   status VARCHAR(100),
+  special_instructions TEXT,
+  patient_education_provided TEXT,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

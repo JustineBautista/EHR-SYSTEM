@@ -95,7 +95,7 @@ $error = "";
 
 if (isset($_POST['add_vitals'])) {
     $bp = $_POST['bp'] ?? "";
-    $hr = $_POST['hr'] ?? "";
+    $hr = $_POST['hr'] ?? "";   
     $temp = $_POST['temp'] ?? "";
     $height = $_POST['height'] ?? "";
     $weight = $_POST['weight'] ?? "";
@@ -1446,24 +1446,6 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                 <p><strong>Medical History:</strong> <?php echo htmlspecialchars(html_entity_decode($patient['history'] ?: 'No history recorded', ENT_QUOTES, 'UTF-8')); ?></p>
                             </div>
                         </div>
-
-                        <!-- Search Bar -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <form method="get" class="d-flex">
-                                    <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-                                    <input type="text" class="form-control me-2" name="search" placeholder="Search medical records..." value="<?php echo htmlspecialchars($search); ?>">
-                                    <button type="submit" class="btn btn-primary me-2">Search</button>
-                                    <?php if (!empty($search)): ?>
-                                        <a href="?patient_id=<?php echo $patient_id; ?>" class="btn btn-outline-secondary">Clear</a>
-                                    <?php endif; ?>
-                                </form>
-                                <?php if (!empty($search)): ?>
-                                    <small class="text-muted mt-2 d-block">Showing results for: "<?php echo htmlspecialchars($search); ?>"</small>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
                         <!-- Medical Records Overview -->
                         <div class="row">
                             <?php
@@ -1672,6 +1654,16 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                 <div class="row g-2 mb-2">
                                     <div class="col-12">
                                         <input class="form-control" name="notes" placeholder="Frequency" value="<?php echo htmlspecialchars($_POST['notes'] ?? ''); ?>" required>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-12">
+                                        <textarea class="form-control" name="special_instructions" placeholder="Special Instructions" rows="2" required><?php echo htmlspecialchars($_POST['special_instructions'] ?? ''); ?></textarea>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-12">
+                                        <textarea class="form-control" name="patient_education_provided" placeholder="Patient Education Provided" rows="2" required><?php echo htmlspecialchars($_POST['patient_education_provided'] ?? ''); ?></textarea>
                                     </div>
                                 </div>
                                 <div class="row g-2">

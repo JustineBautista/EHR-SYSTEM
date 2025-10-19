@@ -335,7 +335,7 @@ include "header.php";
                             while ($r = $res->fetch_assoc()):
                                 // Fetch additional medical data with prepared statements
                                 $medical_data = [];
-                                $tables = ['medical_history', 'medications', 'vitals', 'diagnostics', 'treatment_plans', 'lab_results', 'progress_notes'];
+                                $tables = ['medical_history', 'medications', 'vitals', 'diagnostics', 'treatment_plans', 'lab_results', 'progress_notes', 'physical_assessments'];
                                 
                                 foreach ($tables as $table) {
                                     $stmt = $conn->prepare("SELECT * FROM `$table` WHERE patient_id = ?");
@@ -495,7 +495,8 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
         {key: 'diagnostics', title: 'Diagnostics', fields: ['problem', 'diagnosis', 'date_diagnosed']},
         {key: 'treatment_plans', title: 'Treatment Plans', fields: ['plan', 'notes', 'date_planned']},
         {key: 'lab_results', title: 'Lab Results', fields: ['test_name', 'test_result', 'date_taken']},
-        {key: 'progress_notes', title: 'Progress Notes', fields: ['note', 'author', 'date_written']}
+        {key: 'progress_notes', title: 'Progress Notes', fields: ['note', 'author', 'date_written']},
+        {key: 'physical_assessments', title: 'Physical Assessments', fields: ['assessed_by', 'head_and_neck', 'cardiovascular', 'respiratory', 'Abdominal', 'neurological', 'musculoskeletal', 'skin', 'psychiatric', 'date_assessed']}
     ];
     
     recordTypes.forEach(function(recordType) {
