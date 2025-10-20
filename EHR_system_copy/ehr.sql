@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS medical_history (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
   condition_name VARCHAR(255),
+  status VARCHAR(50),
   notes TEXT,
   date_recorded DATETIME,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
@@ -45,8 +46,8 @@ CREATE TABLE IF NOT EXISTS medications (
   indication VARCHAR(200),
   prescriber VARCHAR(100),
   status VARCHAR(100),
-  special_instructions TEXT,
-  patient_education_provided TEXT,
+  patient_instructions TEXT,
+  pharmacy_instructions TEXT,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -54,12 +55,16 @@ CREATE TABLE IF NOT EXISTS medications (
 CREATE TABLE IF NOT EXISTS vitals (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
+  recorded_by VARCHAR(150),
   bp VARCHAR(50),
   hr VARCHAR(50),
   temp VARCHAR(50),
   height VARCHAR(50),
   weight VARCHAR(50),
+  oxygen_saturation INT,
+  pain_scale INT,
   date_taken DATETIME,
+  general_apearance TEXT,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

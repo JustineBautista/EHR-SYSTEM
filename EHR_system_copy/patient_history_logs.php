@@ -9,13 +9,50 @@ if (!isset($_SESSION['admin'])) {
     exit();
 }
 require_once 'db.php';
+
+// Get filter parameters
+$patient_id = $_GET['patient_id'] ?? '';
+$action_type = $_GET['action_type'] ?? '';
+$date_from = $_GET['date_from'] ?? '';
+$date_to = $_GET['date_to'] ?? '';
+
+// Build query dynamically
+$query = "SELECT * FROM audit_trail WHERE patient_id IS NOT NULL";
+$params = [];
+$types = '';
+
+if (!empty($patient_id)) {
+    $query .= " AND patient_id = ?";
+    $params[] = $patient_id;
+    $types .= 's';
+}
+
+if (!empty($action_type)) {
+    $query .= " AND action_type = ?";
+    $params[] = $action_type;
+    $types .= 's';
+}
+
+if (!empty($date_from)) {
+    $query .= " AND action_date >= ?";
+    $params[] = $date_from . ' 00:00:00';
+    $types .= 's';
+}
+
+if (!empty($date_to)) {
+    $query .= " AND action_date <= ?";
+    $params[] = $date_to . ' 23:59:59';
+    $types .= 's';
+}
+
+$query .= " ORDER BY action_date DESC";
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EHR System</title>
+    <title>Patient History Logs - EHR System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
     <style>
@@ -29,7 +66,7 @@ require_once 'db.php';
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
         }
-        
+
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -49,7 +86,7 @@ require_once 'db.php';
             top: 0;
             left: 0;
             right: 0;
-            z-index: 1030;  
+            z-index: 1030;
             border-radius: 0 0 1rem 1rem;
         }
 
@@ -68,7 +105,7 @@ require_once 'db.php';
         .navbar:hover::before {
             left: 100%;
         }
-        
+
         .navbar-brand {
             font-weight: 800;
             color: white !important;
@@ -186,7 +223,7 @@ require_once 'db.php';
                 font-size: 1.5rem;
             }
         }
-        
+
         .card {
             border: none;
             border-radius: 10px;
@@ -194,68 +231,68 @@ require_once 'db.php';
             transition: transform 0.3s, box-shadow 0.3s;
             margin-bottom: 20px;
         }
-        
+
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .card-header {
             background-color: var(--primary-color);
             color: white;
             font-weight: 600;
             border-radius: 10px 10px 0 0 !important;
         }
-        
+
         .btn-primary {
             background-color: var(--secondary-color);
             border-color: var(--secondary-color);
         }
-        
+
         .btn-primary:hover {
             background-color: #2980b9;
             border-color: #2980b9;
         }
-        
+
         .btn-success {
             background-color: var(--success-color);
             border-color: var(--success-color);
         }
-        
+
         .btn-danger {
             background-color: var(--danger-color);
             border-color: var(--danger-color);
         }
-        
+
         .btn {
             border-radius: 5px;
             font-weight: 500;
             padding: 0.5rem 1rem;
             transition: all 0.3s;
         }
-        
+
         .table {
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
-        
+
         .table thead {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .form-control {
             border-radius: 5px;
             border: 1px solid #ced4da;
             padding: 0.5rem 0.75rem;
         }
-        
+
         .form-control:focus {
             box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
             border-color: var(--secondary-color);
         }
-        
+
         .module-btn {
             text-align: center;
             border-radius: 10px;
@@ -264,32 +301,44 @@ require_once 'db.php';
             transition: all 0.3s;
             height: 100%;
         }
-        
+
         .module-btn:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
             background-color: var(--accent-color);
             color: white;
         }
-        
+
         .stats-card {
             border-left: 5px solid var(--secondary-color);
         }
-        
+
         .modal-header {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .modal-content {
             border-radius: 10px;
             border: none;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
-        
+
         .input-group-text {
             background-color: var(--light-color);
             border: 1px solid #ced4da;
+        }
+
+        .log-insert {
+            background-color: #d4edda !important; /* green */
+        }
+
+        .log-update {
+            background-color: #fff3cd !important; /* yellowish */
+        }
+
+        .log-delete {
+            background-color: #f8d7da !important; /* red */
         }
     </style>
 </head>
@@ -310,6 +359,9 @@ require_once 'db.php';
                     <li class="nav-item">
                         <a class="nav-link" href="patients.php"><i class="bi bi-people-fill me-1"></i>Patients</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="patient_history_logs.php"><i class="bi bi-clock-history me-1"></i>Patient History Logs</a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
@@ -317,7 +369,6 @@ require_once 'db.php';
                             <i class="bi bi-person-circle me-1"></i>Admin
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="patient_history_logs.php"><i class="bi bi-clock-history me-1"></i>Patient History Logs</a></li>
                             <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
                         </ul>
                     </li>
@@ -326,7 +377,129 @@ require_once 'db.php';
         </div>
     </nav>
 
-    <div class="container-fluid mt-4">
+    <div class="container-fluid mt-5 pt-4">
         <div class="row">
             <div class="col-12">
-                <!-- Page content will go here -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Patient History Logs</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filter Form -->
+                        <form method="GET" class="mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="patient_id" class="form-label">Patient ID</label>
+                                    <input type="text" class="form-control" id="patient_id" name="patient_id" value="<?php echo htmlspecialchars($patient_id); ?>" placeholder="Enter Patient ID">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="action_type" class="form-label">Action Type</label>
+                                    <select class="form-select" id="action_type" name="action_type">
+                                        <option value="">All Actions</option>
+                                        <option value="INSERT" <?php echo $action_type == 'INSERT' ? 'selected' : ''; ?>>INSERT</option>
+                                        <option value="UPDATE" <?php echo $action_type == 'UPDATE' ? 'selected' : ''; ?>>UPDATE</option>
+                                        <option value="DELETE" <?php echo $action_type == 'DELETE' ? 'selected' : ''; ?>>DELETE</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="date_from" class="form-label">From Date</label>
+                                    <input type="date" class="form-control" id="date_from" name="date_from" value="<?php echo htmlspecialchars($date_from); ?>">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="date_to" class="form-label">To Date</label>
+                                    <input type="date" class="form-control" id="date_to" name="date_to" value="<?php echo htmlspecialchars($date_to); ?>">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary me-2">Filter</button>
+                                    <a href="patient_history_logs.php" class="btn btn-secondary">Clear</a>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Action Type</th>
+                                        <th>Table Name</th>
+                                        <th>Patient ID</th>
+                                        <th>Username</th>
+                                        <th>Date & Time</th>
+                                        <th>Old Values</th>
+                                        <th>New Values</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    // Function to format values as table with labels, 3 columns max per row
+                                    function format_values($json_values) {
+                                        if (!$json_values || $json_values === 'null') {
+                                            return 'N/A';
+                                        }
+                                        $values = json_decode($json_values, true);
+                                        if (!$values || !is_array($values)) {
+                                            return htmlspecialchars($json_values);
+                                        }
+                                        $html = '<table class="table table-sm table-borderless mb-0">';
+                                        $count = 0;
+                                        foreach ($values as $key => $val) {
+                                            if ($count % 3 == 0) {
+                                                if ($count > 0) $html .= '</tr>';
+                                                $html .= '<tr>';
+                                            }
+                                            $display_key = ucfirst(str_replace('_', ' ', $key));
+                                            $html .= '<td><strong>' . htmlspecialchars($display_key) . ':</strong> ' . htmlspecialchars($val ?: 'N/A') . '</td>';
+                                            $count++;
+                                        }
+                                        if ($count % 3 != 0) {
+                                            while ($count % 3 != 0) {
+                                                $html .= '<td></td>';
+                                                $count++;
+                                            }
+                                        }
+                                        $html .= '</tr></table>';
+                                        return $html;
+                                    }
+
+                                    // Query audit_trail for patient-related logs with filters
+                                    $stmt = $conn->prepare($query);
+                                    if (!empty($params)) {
+                                        $stmt->bind_param($types, ...$params);
+                                    }
+                                    $stmt->execute();
+                                    $result = $stmt->get_result();
+
+                                    while ($row = $result->fetch_assoc()) {
+                                        $action_class = '';
+                                        if ($row['action_type'] == 'INSERT') {
+                                            $action_class = 'log-insert';
+                                        } elseif ($row['action_type'] == 'UPDATE') {
+                                            $action_class = 'log-update';
+                                        } elseif ($row['action_type'] == 'DELETE') {
+                                            $action_class = 'log-delete';
+                                        }
+
+                                        echo "<tr class='$action_class'>";
+                                        echo "<td>" . htmlspecialchars($row['action_type']) . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['table_name']) . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['patient_id']) . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['username']) . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['action_date']) . "</td>";
+                                        echo "<td>" . format_values($row['old_values']) . "</td>";
+                                        echo "<td>" . format_values($row['new_values']) . "</td>";
+                                        echo "</tr>";
+                                    }
+
+                                    $stmt->close();
+                                    ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

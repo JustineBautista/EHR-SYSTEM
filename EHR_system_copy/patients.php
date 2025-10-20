@@ -344,7 +344,7 @@ include "header.php";
                                         $medical_data[$table] = [];
                                         while ($row = $result->fetch_assoc()) {
                                             $medical_data[$table][] = $row;
-                                        }
+                                        }   
                                         $stmt->close();
                                     }
                                 }
@@ -370,7 +370,7 @@ include "header.php";
                                            onclick="return confirm('Delete patient and all related records?')" title="Delete">
                                             <i class="bi bi-trash"></i>
                                         </a>
-                                        <a class="btn btn-outline-secondary" href="patient_dashboard.php?patient_id=<?php echo $r['id']; ?>" title="Record">Record</a>
+                                        <a class="btn btn-outline-secondary" href="patient_dashboard.php?patient_id=<?php echo $r['id']; ?>" title="Record Vitals">Record</a>
                                     </div>
                                 </td>
                             </tr>
@@ -470,7 +470,11 @@ document.addEventListener('DOMContentLoaded', function() {
 var summaryModal = document.getElementById('summaryModal');
 summaryModal.addEventListener('show.bs.modal', function (event) {
     var button = event.relatedTarget;
-    var patientData = JSON.parse(button.getAttribute('data-patient'));
+    var encodedData = button.getAttribute('data-patient');
+    var tempDiv = document.createElement('div');
+    tempDiv.innerHTML = encodedData;
+    var decodedData = tempDiv.textContent || tempDiv.innerText;
+    var patientData = JSON.parse(decodedData);
     // Personal Information
     var personalInfo = `
         <ul class="list-group list-group-flush text-left">
@@ -489,13 +493,13 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
     // Medical Records
     var medicalRecords = '';
     var recordTypes = [
-        {key: 'medical_history', title: 'Medical History', fields: ['condition_name', 'notes', 'date_recorded']},
-        {key: 'medications', title: 'Medications', fields: ['medication', 'dose', 'start_date', 'notes']},
-        {key: 'vitals', title: 'Vital Signs', fields: ['bp', 'hr', 'temp', 'height', 'weight', 'date_taken']},
+        {key: 'medical_history', title: 'Medical History', fields: ['condition_name', 'status', 'notes', 'date_recorded']},
+        {key: 'medications', title: 'Medications', fields: ['medication', 'indication', 'prescriber', 'dose', 'status', 'route', 'start_date', 'notes', 'patient_instructions', 'pharmacy_instructions']},
+        {key: 'vitals', title: 'Vital Signs', fields: ['recorded_by', 'bp', 'hr', 'temp', 'height', 'weight', 'oxygen_saturation', 'pain_scale', 'date_taken']},
         {key: 'diagnostics', title: 'Diagnostics', fields: ['problem', 'diagnosis', 'date_diagnosed']},
         {key: 'treatment_plans', title: 'Treatment Plans', fields: ['plan', 'notes', 'date_planned']},
         {key: 'lab_results', title: 'Lab Results', fields: ['test_name', 'test_result', 'date_taken']},
-        {key: 'progress_notes', title: 'Progress Notes', fields: ['note', 'author', 'date_written']},
+        {key: 'progress_notes', title: 'Progress Notes', fields: ['focus', 'note', 'author', 'date_written']},
         {key: 'physical_assessments', title: 'Physical Assessments', fields: ['assessed_by', 'head_and_neck', 'cardiovascular', 'respiratory', 'Abdominal', 'neurological', 'musculoskeletal', 'skin', 'psychiatric', 'date_assessed']}
     ];
     
@@ -513,7 +517,11 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
                         if (recordType.key === 'medications' && field === 'notes') {
                             fieldName = 'Frequency';
                         }
-                        medicalRecords += `<small><strong>${fieldName}:</strong> ${record[field]}</small><br>`;
+                        var displayValue = record[field];
+                        if (field.includes('date')) {
+                            displayValue = record[field].split(' ')[0];
+                        }
+                        medicalRecords += `<small><strong>${fieldName}:</strong> ${displayValue}</small><br>`;
                     }
                 });
                 medicalRecords += '</div>';
