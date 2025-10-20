@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS vitals (
   oxygen_saturation INT,
   pain_scale INT,
   date_taken DATETIME,
+  bmi DECIMAL(5,2) DEFAULT NULL,
   general_apearance TEXT,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -95,6 +96,20 @@ CREATE TABLE IF NOT EXISTS lab_results (
   test_name VARCHAR(255),
   test_result TEXT,
   date_taken DATETIME,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- lab_diagnostic_results
+CREATE TABLE IF NOT EXISTS lab_diagnostic_results (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT,
+  test_type VARCHAR(255),
+  test_name VARCHAR(255),
+  result VARCHAR(255),
+  normal_range VARCHAR(255),
+  date_ordered DATE,
+  date_completed DATE,
+  notes TEXT,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
