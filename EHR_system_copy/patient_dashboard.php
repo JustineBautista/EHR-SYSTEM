@@ -459,17 +459,17 @@ if (isset($_POST['add_vitals'])) {
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate blood pressure format (systolic/diastolic)
-    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    if (!empty($bp) && !preg_match('/^\d+\/\d+$/', $bp)) {
         $error = "Blood pressure must be in format 'systolic/diastolic' (e.g., 120/80)";
     }
     elseif (empty($oxygen_saturation)){
-        $msg = "Oxygen Saturation is requird";
+        $error = "Oxygen Saturation is required";
     }
     elseif (empty($pain_scale)){
-        $msg = "Pain Scale is requird";
+        $error = "Pain Scale is required";
     }
     elseif (empty($general_appearance)){
-        $msg = "General appearance is requird";
+        $error = "General appearance is required";
     }
     else {
         $stmt = $conn->prepare("INSERT INTO vitals (patient_id, recorded_by, bp, respiratory_rate, hr, temp, height, weight, oxygen_saturation, pain_scale, general_appearance, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -532,9 +532,13 @@ if (isset($_POST['update_vitals'])) {
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate (same as add)
-    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+
+    if (!empty($_POST['bp']) && !preg_match('/^\d+\/\d+$/', $_POST['bp'])) {
+
         $error = "Blood pressure must be in format 'systolic/diastolic' (e.g., 120/80)";
+
     }
+
     else {
         $stmt = $conn->prepare("UPDATE vitals SET recorded_by=?, bp=?, respiratory_rate=?, hr=?, temp=?, height=?, weight=?, oxygen_saturation=?, pain_scale=?, general_appearance=?, date_taken=? WHERE id=? AND patient_id=?");
         $stmt->bind_param("sssddddiissii",$recorded_by, $bp, $respiratory_rate, $hr, $temp, $height, $weight, $oxygen_saturation, $pain_scale, $general_appearance, $date, $vid, $patient_id);
@@ -879,19 +883,27 @@ if (isset($_GET['delete_diagnostic'])) {
 
 // Handle update diagnostics
 if (isset($_POST['update_diagnostic'])) {
+    $did = intval($_POST['diagnostic_id']);
     $study_type = sanitize_input($conn, $_POST['study_type'] ?? "");
     $body_part_region = sanitize_input($conn, $_POST['body_part_region'] ?? "");
     $study_description = sanitize_input($conn, $_POST['study_description'] ?? "");
     $clinical_indication = sanitize_input($conn, $_POST['clinical_indication'] ?? "");
-    $image_quality = sanitize_input($conn, $_POST['image_quality'] ?? ""); 
+    $image_quality = sanitize_input($conn, $_POST['image_quality'] ?? "");
+    $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
+    $performed_by = sanitize_input($conn, $_POST['performed_by'] ?? "");
+    $interpreted_by = sanitize_input($conn, $_POST['Interpreted_by'] ?? "");
+    $imaging_facility = sanitize_input($conn, $_POST['Imaging_facility'] ?? "");
+    $radiology_findings = $_POST['radiology_findings'] ?? "";
+    $impression_conclusion = $_POST['impression_conclusion'] ?? "";
+    $recommendations = $_POST['recommendations'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate date format if provided
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Date must be in format YYYY-MM-DD.";
     } else {
-        $stmt = $conn->prepare("UPDATE diagnostics SET study_type=?, body_part_region=?, study_description=?, clinical_indication=?, image_quality=?, date_diagnosed=? WHERE id=? AND patient_id=?");
-        $stmt->bind_param("ssssssii", $study_type, $body_part_region, $study_description, $clinical_indication, $image_quality, $date, $did, $patient_id);
+        $stmt = $conn->prepare("UPDATE diagnostics SET study_type=?, body_part_region=?, study_description=?, clinical_indication=?, image_quality=?, order_by=?, performed_by=?, Interpreted_by=?, Imaging_facility=?, radiology_findings=?, impression_conclusion=?, recommendations=?, date_diagnosed=? WHERE id=? AND patient_id=?");
+        $stmt->bind_param("sssssssssssssii", $study_type, $body_part_region, $study_description, $clinical_indication, $image_quality, $order_by, $performed_by, $interpreted_by, $imaging_facility, $radiology_findings, $impression_conclusion, $recommendations, $date, $did, $patient_id);
         if ($stmt->execute()) {
             $msg = "Diagnostic updated.";
         } else {
@@ -1000,30 +1012,54 @@ if (isset($_POST['update_treatment_plan'])) {
     $special_instructions = sanitize_input($conn, $_POST['special_instructions'] ?? "");
     $patient_education_provided = sanitize_input($conn, $_POST['patient_education_provided'] ?? "");
 
+    $problems = sanitize_input($conn, $_POST['problems'] ?? "");
 
     // Validate date format if provided
+
     if  ( (!empty($date_started) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_started)) ||
+
         (!empty($date_ended) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_ended))) {
+
         $error = "Date must be in format YYYY-MM-DD.";
+
     } else {
-        $stmt = $conn->prepare("UPDATE treatment_plans SET plan=?, intervention=?, problems=?, frequency=?, duration=?, order_by=?, assigned_to=?, date_started=?, date_ended=?, special_instructions=?, patient_education_provided=?, WHERE id=? AND patient_id=?");
-        $stmt->bind_param("sssssssssssii", $plan, $intervention, $problems,$frequency, $duration, $order_by, $assigned_to, $date_started, $date_ended, $special_instructions, $patient_education_provided, $tid, $patient_id);
+
+        $stmt = $conn->prepare("UPDATE treatment_plans SET plan=?, intervention=?, problems=?, frequency=?, duration=?, order_by=?, assigned_to=?, date_started=?, date_ended=?, special_instructions=?, patient_education_provided=? WHERE id=? AND patient_id=?");
+
+        $stmt->bind_param("sssssssssssii", $plan, $intervention, $problems, $frequency, $duration, $order_by, $assigned_to, $date_started, $date_ended, $special_instructions, $patient_education_provided, $tid, $patient_id);
+
         if ($stmt->execute()) {
+
             $msg = "Treatment plan updated.";
+
         } else {
+
             $error = "Error updating treatment plan: " . $stmt->error;
+
         }
+
         $stmt->close();
+
         // Refresh treatment_plans data
+
         $stmt = $conn->prepare("SELECT * FROM treatment_plans WHERE patient_id = ? ORDER BY id DESC");
+
         $stmt->bind_param("i", $patient_id);
+
         $stmt->execute();
+
         $result = $stmt->get_result();
+
         $medical_data['treatment_plans'] = [];
+
         while ($row = $result->fetch_assoc()) {
+
             $medical_data['treatment_plans'][] = $row;
+
         }
+
         $stmt->close();
+
     }
 }
 
@@ -1604,6 +1640,398 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
     </div>
 </div>
 
+<!-- Edit Modal for Vitals -->
+<div class="modal fade" id="editVitalsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" id="editVitalsForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Vitals</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="vital_id" id="vital_id">
+                    <div class="row g-2">
+                        <div class="col-md-2"><label class="form-label">Recorded By</label><input type="text" class="form-control" name="recorded_by" id="recorded_by_edit" required></div>
+                        <div class="col-md-2"><label class="form-label">BP</label><input class="form-control" name="bp" id="bp_edit" placeholder="e.g., 120/80" required></div>
+                        <div class="col-md-2"><label class="form-label">RR</label><input class="form-control" name="respiratory_rate" id="respiratory_rate_edit" placeholder="cpm" required></div>
+                        <div class="col-md-2"><label class="form-label">HR</label><input class="form-control" name="hr" id="hr_edit" placeholder="bpm" required></div>
+                        <div class="col-md-2"><label class="form-label">Temp</label><input step="0.1" class="form-control" name="temp" id="temp_edit" placeholder="°C" required></div>
+                        <div class="col-md-2"><label class="form-label">Height</label><input step="0.1" class="form-control" name="height" id="height_edit" placeholder="cm" required></div>
+                        <div class="col-md-2"><label class="form-label">Weight</label><input step="0.1" class="form-control" name="weight" id="weight_edit" placeholder="kg" required></div>
+                        <div class="col-md-2"><label class="form-label">O2 Sat</label><input class="form-control" name="oxygen_saturation" id="oxygen_saturation_edit" placeholder="%" min="0" max="100"></div>
+                        <div class="col-md-2"><label class="form-label">Pain Scale</label><input type="number" class="form-control" name="pain_scale" id="pain_scale_edit" placeholder="0-10" min="0" max="10"></div>
+                        <div class="col-md-2"><label class="form-label">Date</label><input type="date" class="form-control" name="date" id="date_edit"></div>
+                        <div class="col-md-10"><label class="form-label">General Appearance</label><textarea style="white-space: pre-wrap;" class="form-control" name="general_appearance" id="general_appearance_edit" rows="4"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_vitals" class="btn btn-primary">Save Vitals</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal for Medications -->
+<div class="modal fade" id="editMedicationsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" id="editMedicationsForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Medication</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="med_id" id="med_id">
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <input class="form-control" name="medication" id="medication_edit" placeholder="Medication" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <input class="form-control" name="indication" id="indication_edit" placeholder="Indication" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <input class="form-control" name="prescriber" id="prescriber_edit" placeholder="Prescriber(e.g. Dr.Name, MD)" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-3">
+                            <input class="form-control" name="dose" id="dose_edit" placeholder="Dose" required>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-control" name="route" id="route_edit_select" required>
+                                <option value="">Select Route</option>
+                                <option value="PO">PO</option>
+                                <option value="IV">IV</option>
+                                <option value="IM">IM</option>
+                                <option value="SC">SC</option>
+                                <option value="Topical">Topical</option>
+                                <option value="Inhaled">Inhaled</option>
+                                <option value="PR">PR</option>
+                                <option value="SL">SL</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <input type="text" class="form-control mt-1" name="custom_route" id="custom_route_edit" placeholder="Specify Route" style="display: none;">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-control" name="status" id="status_edit" required>
+                                <option value="">Select Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Discontinued">Discontinued</option>
+                                <option value="On Hold">On Hold</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input class="form-control" name="start_date" id="start_date_edit" type="date" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <input class="form-control" name="notes" id="notes_edit" placeholder="Frequency" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <textarea class="form-control" name="patient_instructions" id="patient_instructions_edit" placeholder="Patient Instructions: " rows="2" required></textarea>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-12">
+                            <textarea class="form-control" name="pharmacy_instructions" id="pharmacy_instructions_edit" placeholder="Pharmacy Instructions: " rows="2" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_med" class="btn btn-primary">Save Medication</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal for Progress Notes -->
+<div class="modal fade" id="editProgressNotesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" id="editProgressNotesForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Progress Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="note_id" id="note_id">
+                    <div class="row g-2">
+                        <div class="col-md-12"><input class="form-control" name="focus" id="focus_edit" placeholder="Focus" required></div>
+                        <textarea class="form-control" name="note" id="note_edit" placeholder="Progress note" rows="3" required></textarea>
+                        <div class="col-md-3"><input class="form-control" name="author" id="author_edit" placeholder="Author" required></div>
+                        <div class="col-md-3"><input type="date" class="form-control" name="date" id="date_note_edit" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_note" class="btn btn-primary">Save Note</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal for Diagnostics -->
+<div class="modal fade" id="editDiagnosticsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <form method="post" id="editDiagnosticsForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Diagnostic</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="diagnostic_id" id="diagnostic_id">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <select class="form-control" name="study_type" id="study_type_edit" required>
+                                <option value="">Select Study Type</option>
+                                <option value="X-RAY">X-RAY</option>
+                                <option value="CT SCAN">CT SCAN</option>
+                                <option value="MRI">MRI</option>
+                                <option value="Ultrasound">Ultrasound</option>
+                                <option value="Nuclear Medicine">Nuclear Medicine</option>
+                                <option value="PET Scan">PET Scan</option>
+                                <option value="Mammography">Mammography</option>
+                                <option value="Fluoroscopy">Fluoroscopy</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <input type="text" class="form-control mt-1" name="custom_study_type" id="custom_study_type_edit" placeholder="Specify Study Type" style="display: none;">
+                        </div>
+                        <div class="col-md-4"><input class="form-control" name="body_part_region" id="body_part_region_edit" placeholder="Body part/region(e.g., Chest, Left Knee)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="study_description" id="study_description_edit" placeholder="Study Description" required></div>
+                        <div class="col-md-4"><input class="form-control" name="clinical_indication" id="clinical_indication_edit" placeholder="Clinical Indication(Reason for ordering the study)" required></div>
+                        <div class="col-md-4">
+                            <select class="form-control" name="image_quality" id="image_quality_edit" required>
+                                <option value="">Select Image quality</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good">Good</option>
+                                <option value="Fair">Fair</option>
+                                <option value="Poor">Poor</option>
+                                <option value="Limited">Limited</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4"><input class="form-control" name="order_by" id="order_by_edit" placeholder="Order by(Dr.Name, MD)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="performed_by" id="performed_by_edit" placeholder="Performed by(Technologist name)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="Interpreted_by" id="Interpreted_by_edit" placeholder="Interpreted by(Dr.Name, MD)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="Imaging_facility" id="Imaging_facility_edit" placeholder="Imaging Facility(Facility name)" required></div>
+                        <div class="col-md-12"><textarea class="form-control" name="radiology_findings" id="radiology_findings_edit" placeholder="Radiological Findings(Detailed findings from the study)" rows="4" required></textarea></div>
+                        <div class="col-md-12"><textarea class="form-control" name="impression_conclusion" id="impression_conclusion_edit" placeholder="Impression / Conclusion(Radiologist's impression and conclusion)" rows="4" required></textarea></div>
+                        <div class="col-md-12"><textarea class="form-control" name="recommendations" id="recommendations_edit" placeholder="Recommendations( Follow-up recommendations)" rows="4" required></textarea></div>
+                        <div class="col-md-4"><input class="form-control" name="date" id="date_diagnostic_edit" type="date" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_diagnostic" class="btn btn-primary">Save Diagnostic</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal for Treatment Plans -->
+<div class="modal fade" id="editTreatmentPlansModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <form method="post" id="editTreatmentPlansForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Treatment Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="treatment_plan_id" id="treatment_plan_id">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <select class="form-control" name="plan" id="plan_edit" required>
+                                <option value="">Select Plan Type</option>
+                                <option value="Physician Order">Physician Order</option>
+                                <option value="Nursing Intervention">Nursing Intervention</option>
+                                <option value="Procedure">Procedure</option>
+                                <option value="Therapy">Therapy</option>
+                                <option value="Patient Education">Patient Education</option>
+                                <option value="Referral">Referral</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <textarea class="form-control" name="intervention" id="intervention_edit" placeholder="Intervention Description" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <textarea class="form-control" name="problems" id="problems_edit" placeholder="Related Problems:" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <textarea class="form-control" name="frequency" id="frequency_edit" placeholder="e.g., 2 weeks, Until discharge" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <textarea class="form-control" name="duration" id="duration_edit" placeholder="e.g., Daily, BIR, PRN" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <textarea class="form-control" name="order_by" id="order_by_tp_edit" placeholder="Healthcare provider name" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <textarea class="form-control" name="assigned_to" id="assigned_to_edit" placeholder="Responsible Healthcare provider" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <input class="form-control" name="date_started" id="date_started_edit" type="date" placeholder="Start Date">
+                        </div>
+                        <div class="col-md-4">
+                            <input class="form-control" name="date_ended" id="date_ended_edit" type="date" placeholder="End Date">
+                        </div>
+                        <div class="col-md-12">
+                            <textarea class="form-control" name="special_instructions" id="special_instructions_edit" placeholder="Special Instructions or Instructions..." rows="2"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <textarea class="form-control" name="patient_education_provided" id="patient_education_provided_edit" placeholder="Education provided to patient and/or family..." rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_treatment_plan" class="btn btn-primary">Save Treatment Plan</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal for Lab Results -->
+<div class="modal fade" id="editLabResultsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <form method="post" id="editLabResultsForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Lab Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="lab_id" id="lab_id">
+                    <div class="row g-2">
+                        <div class="col-md-4"><input class="form-control" name="test_name" id="test_name_edit" placeholder="Test Name" required></div>
+                        <div class="col-md-4">
+                            <select class="form-control" name="test_category" id="test_category_edit" required>
+                                <option value="">Select Test Category</option>
+                                <option value="Hematology">Hematology</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Microbiology">Microbiology</option>
+                                <option value="Immunology">Immunology</option>
+                                <option value="Pathology">Pathology</option>
+                                <option value="Genetics">Genetics</option>
+                                <option value="Endocrinology">Endocrinology</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <input type="text" class="form-control mt-1" name="custom_category" id="custom_category_edit" placeholder="Specify Category" style="display: none;">
+                        </div>
+                        <div class="col-md-4"><input class="form-control" name="test_code" id="test_code_edit" placeholder="Test Code(e.g., CBC)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="result" id="result_edit" placeholder="Result(e.g., 7.2)" required></div>
+                        <div class="col-md-4">
+                            <select class="form-control" name="result_status" id="result_status_edit" required>
+                                <option value="">Select Result Status</option>
+                                <option value="Normal">Normal</option>
+                                <option value="High">High</option>
+                                <option value="Low">Low</option>
+                                <option value="Critical High">Critical High</option>
+                                <option value="Critical Low">Critical Low</option>
+                                <option value="Abnormal">Abnormal</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4"><input class="form-control" name="units" id="units_edit" placeholder="Units (e.g., mg/dL)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="reference_range" id="reference_range_edit" placeholder="Reference range(e.g., 3.5-5.0)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="order_by" id="order_by_lab_edit" placeholder="Order by(Dr. name, MD)" required></div>
+                        <div class="col-md-4"><input class="form-control" name="collected_by" id="collected_by_edit" placeholder="Phlebotomist name" required></div>
+                        <div class="col-md-4"><input class="form-control" name="laboratory_facility" id="laboratory_facility_edit" placeholder="Lab facility name" required></div>
+                        <div class="col-md-4"><input type="date" class="form-control" name="date" id="date_lab_edit"></div>
+                        <div class="col-md-8"><textarea class="form-control" name="clinical_interpretation" id="clinical_interpretation_edit" placeholder="Clinical significance and interpretation" rows="3"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_lab" class="btn btn-primary">Save Lab Result</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal for Medical History -->
+<div class="modal fade" id="editMedicalHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="editMedicalHistoryForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Medical History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="history_id" id="history_id">
+                    <div class="row g-2">
+                        <div class="col-md-3"><input class="form-control" name="condition_name" id="condition_name_edit" placeholder="Condition Name" required></div>
+                        <div class="col-md-2">
+                            <select class="form-control" name="status" id="status_mh_edit" required>
+                                <option value="">Select Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Chronic">Chronic</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><textarea class="form-control" name="notes" id="notes_mh_edit" placeholder="Notes" rows="2" required></textarea></div>
+                        <div class="col-md-4"><input class="form-control" name="date" id="date_mh_edit" type="date" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_medical_history" class="btn btn-primary">Save Medical History</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal for Physical Assessment -->
+<div class="modal fade" id="editPhysicalAssessmentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" id="editPhysicalAssessmentForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Physical Assessment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="assessment_id" id="assessment_id">
+                    <div class="row g-2">
+                        <div class="col-md-6"><input class="form-control" name="assessed_by" id="assessed_by_edit" placeholder="Assessed By" required></div>
+                        <div class="col-md-6"><textarea class="form-control" name="head_and_neck" id="head_and_neck_edit" placeholder="Head and Neck" rows="2" required></textarea></div>
+                        <div class="col-md-6"><textarea class="form-control" name="cardiovascular" id="cardiovascular_edit" placeholder="Cardiovascular" rows="2" required></textarea></div>
+                        <div class="col-md-6"><textarea class="form-control" name="respiratory" id="respiratory_edit" placeholder="Respiratory" rows="2" required></textarea></div>
+                        <div class="col-md-6"><textarea class="form-control" name="abdominal" id="abdominal_edit" placeholder="Abdominal" rows="2" required></textarea></div>
+                        <div class="col-md-6"><textarea class="form-control" name="neurological" id="neurological_edit" placeholder="Neurological" rows="2" required></textarea></div>
+                        <div class="col-md-6"><textarea class="form-control" name="musculoskeletal" id="musculoskeletal_edit" placeholder="Musculoskeletal" rows="2" required></textarea></div>
+                        <div class="col-md-6"><textarea class="form-control" name="skin" id="skin_edit" placeholder="Skin" rows="2" required></textarea></div>
+                        <div class="col-md-6"><textarea class="form-control" name="psychiatric" id="psychiatric_edit" placeholder="Psychiatric" rows="2" required></textarea></div>
+                        <div class="col-md-6"><input class="form-control" name="date" id="date_pa_edit" type="date" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="update_physical_assessment" class="btn btn-primary">Save Physical Assessment</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="container-fluid mt-4">
     <div class="row">
         <!-- Sidebar for EHR Modules -->
@@ -1660,21 +2088,6 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Patient Dashboard - <?php echo htmlspecialchars($patient['fullname']); ?></h5>
                 </div>
                 <div class="card-body">
-                    
-                    <!-- Feedback Messages -->
-                    <?php if (!empty($msg)): ?>
-                        <div class="alert alert-success alert-dismissible fade show">
-                            <?php echo htmlspecialchars($msg); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($error)): ?>
-                        <div class="alert alert-danger alert-dismissible fade show">
-                            <?php echo htmlspecialchars($error); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
 
                     <!-- Default Content: Patient Information and Records -->
                     <div id="default-content">
@@ -2936,21 +3349,79 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
     }
 
     // Edit Lifestyle Info
+
     function editLifestyle(id) {
+
         fetch('?get_lifestyle=' + id + '&patient_id=' + patient_id)
+
             .then(response => response.json())
+
             .then(data => {
+
                 document.getElementById('lifestyle_id').value = data.id;
+
                 document.getElementById('smoking_status_edit').value = data.smoking_status || 'Never';
+
                 document.getElementById('smoking_details_edit').value = data.smoking_details || '';
+
                 document.getElementById('alcohol_use_edit').value = data.alcohol_use || 'None';
+
                 document.getElementById('alcohol_details_edit').value = data.alcohol_details || '';
+
                 document.getElementById('exercise_edit').value = data.exercise || '';
+
                 document.getElementById('diet_edit').value = data.diet || '';
+
                 document.getElementById('recreational_drug_use_edit').value = data.recreational_drug_use || '';
+
                 new bootstrap.Modal(document.getElementById('editLifestyleModal')).show();
+
             })
+
             .catch(error => console.error('Error:', error));
+
+    }
+
+    // Edit Vitals
+
+    function editVital(id) {
+
+        fetch('?get_vital=' + id + '&patient_id=' + patient_id)
+
+            .then(response => response.json())
+
+            .then(data => {
+
+                document.getElementById('vital_id').value = data.id;
+
+                document.getElementById('recorded_by_edit').value = data.recorded_by || '';
+
+                document.getElementById('bp_edit').value = data.bp || '';
+
+                document.getElementById('respiratory_rate_edit').value = data.respiratory_rate || '';
+
+                document.getElementById('hr_edit').value = data.hr || '';
+
+                document.getElementById('temp_edit').value = data.temp || '';
+
+                document.getElementById('height_edit').value = data.height || '';
+
+                document.getElementById('weight_edit').value = data.weight || '';
+
+                document.getElementById('oxygen_saturation_edit').value = data.oxygen_saturation || '';
+
+                document.getElementById('pain_scale_edit').value = data.pain_scale || '';
+
+                document.getElementById('date_edit').value = data.date_taken ? data.date_taken.substring(0, 10) : '';
+
+                document.getElementById('general_appearance_edit').value = data.general_appearance || '';
+
+                new bootstrap.Modal(document.getElementById('editVitalsModal')).show();
+
+            })
+
+            .catch(error => console.error('Error:', error));
+
     }
 
     // Initialize section on page load
