@@ -1095,8 +1095,8 @@ if (isset($_POST['add_lab'])) {
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
     }
     else {
-        $stmt = $conn->prepare("INSERT INTO lab_results (patient_id, test_name, test_result, test_category, test_code, result_status, units, reference_range, order_by, collected_by, labarotary_facility, clinical_interpretation, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("issssssssssss", $patient_id, $test, $result, $test_category, $test_code, $result_status, $units, $reference_range, $order_by, $collected_by, $labarotary_facility, $clinical_interpretation, $date);
+        $stmt = $conn->prepare("INSERT INTO lab_results (patient_id, test_name, test_result, test_category, test_code, result_status, units, reference_range, order_by, collected_by, laboratory_facility, clinical_interpretation, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("issssssssssss", $patient_id, $test, $result, $test_category, $test_code, $result_status, $units, $reference_range, $order_by, $collected_by, $laboratory_facility, $clinical_interpretation, $date);
         if ($stmt->execute()) {
             $msg = "Lab result added.";
             // Refresh medical_data for lab_results
@@ -3186,6 +3186,237 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
             : '?patient_id=' + patient_id + '&section=' + section;
         history.pushState(null, '', url);
     }
+
+// Edit Medications
+function editMed(id) {
+    fetch('?get_med=' + id + '&patient_id=' + patient_id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('med_id').value = data.id;
+            document.getElementById('medication_edit').value = data.medication || '';
+            document.getElementById('indication_edit').value = data.indication || '';
+            document.getElementById('prescriber_edit').value = data.prescriber || '';
+            document.getElementById('dose_edit').value = data.dose || '';
+            
+            // Handle route dropdown and custom route
+            const routeSelect = document.getElementById('route_edit_select');
+            if (data.route && ['PO', 'IV', 'IM', 'SC', 'Topical', 'Inhaled', 'PR', 'SL'].includes(data.route)) {
+                routeSelect.value = data.route;
+                document.getElementById('custom_route_edit').style.display = 'none';
+            } else {
+                routeSelect.value = 'other';
+                document.getElementById('custom_route_edit').style.display = 'block';
+                document.getElementById('custom_route_edit').value = data.route || '';
+            }
+            
+            document.getElementById('status_edit').value = data.status || '';
+            document.getElementById('start_date_edit').value = data.start_date ? data.start_date.substring(0, 10) : '';
+            document.getElementById('notes_edit').value = data.notes || '';
+            document.getElementById('patient_instructions_edit').value = data.patient_instructions || '';
+            document.getElementById('pharmacy_instructions_edit').value = data.pharmacy_instructions || '';
+            
+            new bootstrap.Modal(document.getElementById('editMedicationsModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Edit Progress Notes
+function editNote(id) {
+    fetch('?get_note=' + id + '&patient_id=' + patient_id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('note_id').value = data.id;
+            document.getElementById('focus_edit').value = data.focus || '';
+            document.getElementById('note_edit').value = data.note || '';
+            document.getElementById('author_edit').value = data.author || '';
+            document.getElementById('date_note_edit').value = data.date_written ? data.date_written.substring(0, 10) : '';
+            
+            new bootstrap.Modal(document.getElementById('editProgressNotesModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Edit Diagnostics
+function editDiagnostic(id) {
+    fetch('?get_diagnostic=' + id + '&patient_id=' + patient_id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('diagnostic_id').value = data.id;
+            
+            // Handle study type dropdown and custom study type
+            const studyTypeSelect = document.getElementById('study_type_edit');
+            if (data.study_type && ['X-RAY', 'CT SCAN', 'MRI', 'Ultrasound', 'Nuclear Medicine', 'PET Scan', 'Mammography', 'Fluoroscopy'].includes(data.study_type)) {
+                studyTypeSelect.value = data.study_type;
+                document.getElementById('custom_study_type_edit').style.display = 'none';
+            } else {
+                studyTypeSelect.value = 'other';
+                document.getElementById('custom_study_type_edit').style.display = 'block';
+                document.getElementById('custom_study_type_edit').value = data.study_type || '';
+            }
+            
+            document.getElementById('body_part_region_edit').value = data.body_part_region || '';
+            document.getElementById('study_description_edit').value = data.study_description || '';
+            document.getElementById('clinical_indication_edit').value = data.clinical_indication || '';
+            document.getElementById('image_quality_edit').value = data.image_quality || '';
+            document.getElementById('order_by_edit').value = data.order_by || '';
+            document.getElementById('performed_by_edit').value = data.performed_by || '';
+            document.getElementById('Interpreted_by_edit').value = data.Interpreted_by || '';
+            document.getElementById('Imaging_facility_edit').value = data.Imaging_facility || '';
+            document.getElementById('radiology_findings_edit').value = data.radiology_findings || '';
+            document.getElementById('impression_conclusion_edit').value = data.impression_conclusion || '';
+            document.getElementById('recommendations_edit').value = data.recommendations || '';
+            document.getElementById('date_diagnostic_edit').value = data.date_diagnosed ? data.date_diagnosed.substring(0, 10) : '';
+            
+            new bootstrap.Modal(document.getElementById('editDiagnosticsModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Edit Treatment Plans
+function editTreatmentPlan(id) {
+    fetch('?get_treatment_plan=' + id + '&patient_id=' + patient_id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('treatment_plan_id').value = data.id;
+            document.getElementById('plan_edit').value = data.plan || '';
+            document.getElementById('intervention_edit').value = data.intervention || '';
+            document.getElementById('problems_edit').value = data.problems || '';
+            document.getElementById('frequency_edit').value = data.frequency || '';
+            document.getElementById('duration_edit').value = data.duration || '';
+            document.getElementById('order_by_tp_edit').value = data.order_by || '';
+            document.getElementById('assigned_to_edit').value = data.assigned_to || '';
+            document.getElementById('date_started_edit').value = data.date_started ? data.date_started.substring(0, 10) : '';
+            document.getElementById('date_ended_edit').value = data.date_ended ? data.date_ended.substring(0, 10) : '';
+            document.getElementById('special_instructions_edit').value = data.special_instructions || '';
+            document.getElementById('patient_education_provided_edit').value = data.patient_education_provided || '';
+            
+            new bootstrap.Modal(document.getElementById('editTreatmentPlansModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Edit Lab Results
+function editLab(id) {
+    fetch('?get_lab=' + id + '&patient_id=' + patient_id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('lab_id').value = data.id;
+            document.getElementById('test_name_edit').value = data.test_name || '';
+            
+            // Handle test category dropdown and custom category
+            const testCategorySelect = document.getElementById('test_category_edit');
+            if (data.test_category && ['Hematology', 'Chemistry', 'Microbiology', 'Immunology', 'Pathology', 'Genetics', 'Endocrinology'].includes(data.test_category)) {
+                testCategorySelect.value = data.test_category;
+                document.getElementById('custom_category_edit').style.display = 'none';
+            } else {
+                testCategorySelect.value = 'other';
+                document.getElementById('custom_category_edit').style.display = 'block';
+                document.getElementById('custom_category_edit').value = data.test_category || '';
+            }
+            
+            document.getElementById('test_code_edit').value = data.test_code || '';
+            document.getElementById('result_edit').value = data.test_result || '';
+            document.getElementById('result_status_edit').value = data.result_status || '';
+            document.getElementById('units_edit').value = data.units || '';
+            document.getElementById('reference_range_edit').value = data.reference_range || '';
+            document.getElementById('order_by_lab_edit').value = data.order_by || '';
+            document.getElementById('collected_by_edit').value = data.collected_by || '';
+            document.getElementById('laboratory_facility_edit').value = data.laboratory_facility || '';
+            document.getElementById('clinical_interpretation_edit').value = data.clinical_interpretation || '';
+            document.getElementById('date_lab_edit').value = data.date_taken ? data.date_taken.substring(0, 10) : '';
+            
+            new bootstrap.Modal(document.getElementById('editLabResultsModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Edit Medical History
+function editMedicalHistory(id) {
+    fetch('?get_medical_history=' + id + '&patient_id=' + patient_id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('history_id').value = data.id;
+            document.getElementById('condition_name_edit').value = data.condition_name || '';
+            document.getElementById('status_mh_edit').value = data.status || '';
+            document.getElementById('notes_mh_edit').value = data.notes || '';
+            document.getElementById('date_mh_edit').value = data.date_recorded ? data.date_recorded.substring(0, 10) : '';
+            
+            new bootstrap.Modal(document.getElementById('editMedicalHistoryModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Edit Physical Assessment
+function editPhysicalAssessment(id) {
+    fetch('?get_physical_assessment=' + id + '&patient_id=' + patient_id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('assessment_id').value = data.id;
+            document.getElementById('assessed_by_edit').value = data.assessed_by || '';
+            document.getElementById('head_and_neck_edit').value = data.head_and_neck || '';
+            document.getElementById('cardiovascular_edit').value = data.cardiovascular || '';
+            document.getElementById('respiratory_edit').value = data.respiratory || '';
+            document.getElementById('abdominal_edit').value = data.abdominal || '';
+            document.getElementById('neurological_edit').value = data.neurological || '';
+            document.getElementById('musculoskeletal_edit').value = data.musculoskeletal || '';
+            document.getElementById('skin_edit').value = data.skin || '';
+            document.getElementById('psychiatric_edit').value = data.psychiatric || '';
+            document.getElementById('date_pa_edit').value = data.date_assessed ? data.date_assessed.substring(0, 10) : '';
+            
+            new bootstrap.Modal(document.getElementById('editPhysicalAssessmentModal')).show();
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Handle custom route dropdown for medications (edit modal)
+document.addEventListener('DOMContentLoaded', function() {
+    const routeEditSelect = document.getElementById('route_edit_select');
+    if (routeEditSelect) {
+        routeEditSelect.addEventListener('change', function() {
+            const customRouteEdit = document.getElementById('custom_route_edit');
+            if (this.value === 'other') {
+                customRouteEdit.style.display = 'block';
+                customRouteEdit.required = true;
+            } else {
+                customRouteEdit.style.display = 'none';
+                customRouteEdit.required = false;
+                customRouteEdit.value = '';
+            }
+        });
+    }
+    
+    // Handle custom study type dropdown for diagnostics (edit modal)
+    const studyTypeEditSelect = document.getElementById('study_type_edit');
+    if (studyTypeEditSelect) {
+        studyTypeEditSelect.addEventListener('change', function() {
+            const customStudyTypeEdit = document.getElementById('custom_study_type_edit');
+            if (this.value === 'other') {
+                customStudyTypeEdit.style.display = 'block';
+                customStudyTypeEdit.required = true;
+            } else {
+                customStudyTypeEdit.style.display = 'none';
+                customStudyTypeEdit.required = false;
+                customStudyTypeEdit.value = '';
+            }
+        });
+    }
+    
+    // Handle custom test category dropdown for lab results (edit modal)
+    const testCategoryEditSelect = document.getElementById('test_category_edit');
+    if (testCategoryEditSelect) {
+        testCategoryEditSelect.addEventListener('change', function() {
+            const customCategoryEdit = document.getElementById('custom_category_edit');
+            if (this.value === 'other') {
+                customCategoryEdit.style.display = 'block';
+                customCategoryEdit.required = true;
+            } else {
+                customCategoryEdit.style.display = 'none';
+                customCategoryEdit.required = false;
+                customCategoryEdit.value = '';
+            }
+        });
+    }
+});
 
     // Edit Surgery
     function editSurgery(id) {
