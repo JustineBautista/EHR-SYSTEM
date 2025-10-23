@@ -1374,6 +1374,9 @@ if (isset($_POST['add_surgery']) || isset($_POST['update_surgery'])) $submitted_
 if (isset($_POST['add_allergy']) || isset($_POST['update_allergy'])) $submitted_section = 'allergies';
 if (isset($_POST['add_family_history']) || isset($_POST['update_family_history'])) $submitted_section = 'family_history';
 if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submitted_section = 'lifestyle_info';
+if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_assessment'])) $submitted_section = 'physical_assessment';
+if (isset($_POST['add_lab']) || isset($_POST['update_lab'])) $submitted_section = 'lab_results';
+if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history'])) $submitted_section = 'medical_history';
 ?>
 
 <style>
@@ -1672,7 +1675,21 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
             <div class="card mb-4 content">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Patient Dashboard - <?php echo htmlspecialchars($patient['fullname']); ?></h5>
+                    <!-- Search Form -->
+                    <form method="get" class="d-flex align-items-center" style="max-width: 400px;">
+                        <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
+                        <input type="text" name="search" class="form-control me-2" placeholder="Search medical records..." value="<?php echo htmlspecialchars($search); ?>">
+                        <button type="submit" class="btn btn-outline-primary me-2">Search</button>
+                        <?php if (!empty($search)): ?>
+                            <a href="?patient_id=<?php echo $patient_id; ?>" class="btn btn-outline-secondary">Clear</a>
+                        <?php endif; ?>
+                    </form>
                 </div>
+                <?php if (!empty($search)): ?>
+                    <div class="alert alert-info mt-2">
+                        <strong>Search Results for:</strong> "<?php echo htmlspecialchars($search); ?>"
+                    </div>
+                <?php endif; ?>
                 <div class="card-body">
                     
                     <!-- Feedback Messages -->
@@ -2490,9 +2507,12 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                                     </select>
                                 </div>
 
-                    <label for="problems_plan_edit" class="form-label">Related Problems</label>
-                    <div class="col-md-4">
-                        <label for="intervention" class="form-label">Intervention</label>
+                                <!-- Related Problems -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Related Problems</label>
+                                    <textarea class="form-control" name="problems" placeholder="Related Problems" rows="1"><?php echo htmlspecialchars($_POST['problems'] ?? ''); ?></textarea>
+                                </div>
+
                                 <!-- Intervention -->
                                 <div class="col-md-4">
                                     <label class="form-label">Intervention</label>
@@ -2855,7 +2875,7 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                         </div>
 
                         <button class="btn btn-secondary mt-3" onclick="showSection('default')">Back to Dashboard</button>
-                    </div>
+                    
                 </div>
             </div>
         </div>
