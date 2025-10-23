@@ -2467,20 +2467,6 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="vitals-content" style="display: none;">
                         <h4>Vital Signs</h4>
 
-                        <!-- Feedback messages for vitals -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
 
                         <!-- Vitals Form (adapted, patient fixed) -->
                         <div class="card p-3 mb-3">
@@ -2555,21 +2541,7 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="medications-content" style="display: none;">
                         <h4>Medications</h4>
 
-                        <!-- Feedback messages for medications -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
+                        
                         <!-- Medications Form -->
                         <div class="card p-3 mb-3">
                             <form method="post">
@@ -2686,21 +2658,6 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="progress_notes-content" style="display: none;">
                         <h4>Progress Notes</h4>
 
-                        <!-- Feedback messages for progress notes -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
                         <!-- Progress Notes Form -->
                         <div class="card p-3 mb-3">
                             <form method="post" class="row g-2">
@@ -2757,20 +2714,6 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="diagnostics-content" style="display: none;">
                         <h4>Diagnostics / Imaging</h4>
 
-                        <!-- Feedback messages for diagnostics -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
 
                         <!-- Diagnostics Form -->
                         <div class="card p-3 mb-3">
@@ -2856,20 +2799,6 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="treatment_plans-content" style="display: none;">
                         <h4>Treatment Plans</h4>
 
-                        <!-- Feedback messages for treatment plans -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
 
                         <!-- Treatment Plans Form -->
                         <div class="card p-3 mb-10">
@@ -2996,21 +2925,6 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="lab_results-content" style="display: none;">
                         <h4>Lab Results</h4>
 
-                        <!-- Feedback messages for lab results -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
                         <!-- Lab Results Form -->
                         <div class="card p-3 mb-3">
                             <form method="post" class="row g-2">
@@ -3098,22 +3012,7 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="medical_history-content" style="display: none;">
                         <h4>Medical History</h4>
 
-                        <!-- Feedback messages for medical history -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <!-- Medical History Form -->
+                         <!-- Medical History Form -->
                         <div class="card p-3 mb-3">
                             <form method="post" class="row g-2">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
@@ -3181,20 +3080,6 @@ if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submit
                     <div id="physical_assessment-content" style="display: none;">
                         <h4>Physical Assessment</h4>
 
-                        <!-- Feedback messages for physical assessment -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
 
                         <!-- Physical Assessment Form -->
                         <div class="card p-3 mb-3">
