@@ -1,4 +1,8 @@
 <?php
+echo '<link rel="icon" href="IMAGES/aurora.png" type="image/png">';
+?>
+
+<?php
 // Check if session is not already started before starting it
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

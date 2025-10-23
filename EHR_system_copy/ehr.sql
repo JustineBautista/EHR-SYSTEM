@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS patients (
   age INT(2),
   contact VARCHAR(50),
   address VARCHAR(255),
-  history TEXT
+  history TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- medical_history
@@ -30,7 +31,7 @@ CREATE TABLE IF NOT EXISTS medical_history (
   condition_name VARCHAR(255),
   status VARCHAR(50),
   notes TEXT,
-  date_recorded DATETIME,
+  date_recorded DATE,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -57,15 +58,15 @@ CREATE TABLE IF NOT EXISTS vitals (
   patient_id INT,
   recorded_by VARCHAR(150),
   bp VARCHAR(50),
+  respiratory_rate VARCHAR(50),
   hr VARCHAR(50),
   temp VARCHAR(50),
   height VARCHAR(50),
   weight VARCHAR(50),
-  oxygen_saturation INT,
-  pain_scale INT,
-  date_taken DATETIME,
-  bmi DECIMAL(5,2) DEFAULT NULL,
-  general_apearance TEXT,
+  oxygen_saturation VARCHAR(50),
+  pain_scale VARCHAR(50),
+  date_taken DATE,
+  general_appearance TEXT,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -73,9 +74,22 @@ CREATE TABLE IF NOT EXISTS vitals (
 CREATE TABLE IF NOT EXISTS diagnostics (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
-  problem VARCHAR(255),
-  diagnosis TEXT,
-  date_diagnosed DATETIME,
+  study_type VARCHAR(255),
+  body_part_region TEXT,
+  study_description TEXT,
+  clinical_indication VARCHAR(150),
+  image_quality VARCHAR(150),
+  --------------------------
+  order_by VARCHAR(150),
+  performed_by VARCHAR(150),
+  Interpreted_by VARCHAR(150),
+  Imaging_facility VARCHAR(150),
+  --------------------------
+  radiology_findings TEXT,
+  impression_conclusion TEXT,
+  recommendations TEXT,
+  --------------------------  
+  date_diagnosed DATE,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -84,8 +98,16 @@ CREATE TABLE IF NOT EXISTS treatment_plans (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
   plan TEXT,
-  notes TEXT,
-  date_planned DATETIME,
+  intervention TEXT,
+  problems TEXT,
+  frequency VARCHAR(150),
+  duration VARCHAR(150),
+  order_by VARCHAR(150),
+  assigned_to VARCHAR(150),
+  date_started DATE,
+  date_ended DATE,
+  special_instructions TEXT,
+  patient_education_provided TEXT,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -94,22 +116,17 @@ CREATE TABLE IF NOT EXISTS lab_results (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
   test_name VARCHAR(255),
+  test_category VARCHAR(255),
+  test_code VARCHAR(255),
   test_result TEXT,
-  date_taken DATETIME,
-  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- lab_diagnostic_results
-CREATE TABLE IF NOT EXISTS lab_diagnostic_results (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  patient_id INT,
-  test_type VARCHAR(255),
-  test_name VARCHAR(255),
-  result VARCHAR(255),
-  normal_range VARCHAR(255),
-  date_ordered DATE,
-  date_completed DATE,
-  notes TEXT,
+  result_status VARCHAR(150),
+  units VARCHAR(150),
+  reference_range VARCHAR(150),
+  order_by VARCHAR(150),
+  collected_by VARCHAR(150),
+  labarotary_facility VARCHAR(150),
+  clinical_interpretation VARCHAR(150),
+  date_taken DATE,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -120,7 +137,7 @@ CREATE TABLE IF NOT EXISTS progress_notes (
   note TEXT,
   focus TEXT,
   author VARCHAR(100),
-  date_written DATETIME,
+  date_written DATE,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

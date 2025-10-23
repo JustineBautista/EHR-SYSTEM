@@ -393,33 +393,20 @@ include "header.php";
 
 <!-- Summary Modal -->
 <div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="summaryModalLabel">
-                    <i class="bi bi-person-lines-fill me-2"></i>Patient Medical Summary
+                    <i class="bi bi-person-fill me-2"></i>Patient Demographics
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header">
-                                <h6 class="mb-0">Patient Demographics</h6>
-                            </div>
+                    <div class="col-12">
+                        <div class="card">
                             <div class="card-body">
                                 <div id="personalInfo"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card h-100">
-                            <div class="card-header">
-                                <h6 class="mb-0">Medical Records</h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="medicalRecords"></div>
                             </div>
                         </div>
                     </div>
@@ -477,65 +464,44 @@ summaryModal.addEventListener('show.bs.modal', function (event) {
     var patientData = JSON.parse(decodedData);
     // Personal Information
     var personalInfo = `
-        <ul class="list-group list-group-flush text-left">
-            <li class="list-group-item"><strong>ID:</strong> ${patientData.id}</li>
-            <li class="list-group-item"><strong>Name:</strong> ${patientData.fullname}</li>
-            <li class="list-group-item"><strong>Date Of Birth:</strong> ${patientData.dob || 'N/A'}</li>
-            <li class="list-group-item"><strong>Age:</strong> ${patientData.age || 'N/A'}</li>
-            <li class="list-group-item"><strong>Gender:</strong> ${patientData.gender || 'N/A'}</li>
-            <li class="list-group-item"><strong>Contact:</strong> ${patientData.contact || 'N/A'}</li>
-            <li class="list-group-item"><strong>Address:</strong> ${patientData.address || 'N/A'}</li>
-            <li class="list-group-item"><strong>History:</strong> ${patientData.history || 'No history recorded'}</li>
-        </ul>
+        <table class="table table-borderless">
+            <tbody>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-hash me-2"></i>ID</td>
+                    <td>${patientData.id}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-person me-2"></i>Name</td>
+                    <td>${patientData.fullname}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-calendar me-2"></i>Date Of Birth</td>
+                    <td>${patientData.dob || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-person-badge me-2"></i>Age</td>
+                    <td>${patientData.age || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-gender-ambiguous me-2"></i>Gender</td>
+                    <td>${patientData.gender || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-telephone me-2"></i>Contact</td>
+                    <td>${patientData.contact || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-geo-alt me-2"></i>Address</td>
+                    <td>${patientData.address || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="fw-bold text-primary"><i class="bi bi-file-medical me-2"></i>History</td>
+                    <td>${patientData.history || 'No history recorded'}</td>
+                </tr>
+            </tbody>
+        </table>
     `;
     document.getElementById('personalInfo').innerHTML = personalInfo;
-    
-    // Medical Records
-    var medicalRecords = '';
-    var recordTypes = [
-        {key: 'medical_history', title: 'Medical History', fields: ['condition_name', 'status', 'notes', 'date_recorded']},
-        {key: 'medications', title: 'Medications', fields: ['medication', 'indication', 'prescriber', 'dose', 'status', 'route', 'start_date', 'notes', 'patient_instructions', 'pharmacy_instructions']},
-        {key: 'vitals', title: 'Vital Signs', fields: ['recorded_by', 'bp', 'hr', 'temp', 'height', 'weight', 'oxygen_saturation', 'pain_scale', 'date_taken']},
-        {key: 'diagnostics', title: 'Diagnostics', fields: ['problem', 'diagnosis', 'date_diagnosed']},
-        {key: 'treatment_plans', title: 'Treatment Plans', fields: ['plan', 'notes', 'date_planned']},
-        {key: 'lab_results', title: 'Lab Results', fields: ['test_name', 'test_result', 'date_taken']},
-        {key: 'progress_notes', title: 'Progress Notes', fields: ['focus', 'note', 'author', 'date_written']},
-        {key: 'physical_assessments', title: 'Physical Assessments', fields: ['assessed_by', 'head_and_neck', 'cardiovascular', 'respiratory', 'Abdominal', 'neurological', 'musculoskeletal', 'skin', 'psychiatric', 'date_assessed']}
-    ];
-    
-    recordTypes.forEach(function(recordType) {
-        var records = patientData[recordType.key] || [];
-        medicalRecords += `<h6 class="text-primary">${recordType.title} (${records.length})</h6>`;
-
-        if (records.length > 0) {
-            records.slice(0, 3).forEach(function(record) { // Show only first 3 records
-                medicalRecords += '<div class="border-start border-3 border-primary ps-3 mb-2">';
-                recordType.fields.forEach(function(field) {
-                    if (record[field]) {
-                        var fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        // Change 'notes' to 'Frequency' for medications
-                        if (recordType.key === 'medications' && field === 'notes') {
-                            fieldName = 'Frequency';
-                        }
-                        var displayValue = record[field];
-                        if (field.includes('date')) {
-                            displayValue = record[field].split(' ')[0];
-                        }
-                        medicalRecords += `<small><strong>${fieldName}:</strong> ${displayValue}</small><br>`;
-                    }
-                });
-                medicalRecords += '</div>';
-            });
-            if (records.length > 3) {
-                medicalRecords += `<small class="text-muted">... and ${records.length - 3} more</small>`;
-            }
-        } else {
-            medicalRecords += '<small class="text-muted">No records found</small>';
-        }
-        medicalRecords += '<hr>';
-    });
-    
-    document.getElementById('medicalRecords').innerHTML = medicalRecords;
 });
 
 // Live search filter for patient names and IDs

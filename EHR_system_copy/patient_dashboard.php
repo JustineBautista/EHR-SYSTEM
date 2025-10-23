@@ -1,4 +1,7 @@
 <?php
+echo '<link rel="icon" href="IMAGES/aurora.png" type="image/png">';
+?>
+<?php
 // Start session and check authentication first
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -47,18 +50,17 @@ if (!$patient) {
 
 // Fetch additional medical data with prepared statements
 $medical_data = [];
-$tables = ['medical_history', 'medications', 'vitals', 'diagnostics', 'treatment_plans', 'progress_notes', 'lab_results', 'lab_diagnostic_results', 'physical_assessments'];
+$tables = ['medical_history', 'medications', 'vitals', 'diagnostics', 'treatment_plans', 'progress_notes', 'lab_results', 'physical_assessments'];
 
 
 $table_fields = [
     'medical_history' => ['condition_name', 'status', 'notes'],
     'medications' => ['medication', 'indication', 'prescriber', 'dose', 'status', 'route', 'notes'],
-    'vitals' => ['recorded_by', 'focus', 'bp', 'hr', 'temp', 'height', 'weight', 'oxygen_saturation', 'pain_scale'],
-    'diagnostics' => ['problem', 'diagnosis'],
-    'treatment_plans' => ['plan', 'notes'],
+    'vitals' => ['recorded_by', 'focus', 'bp','respiratory_rate', 'hr', 'temp', 'height', 'weight', 'oxygen_saturation', 'pain_scale', 'general_appearance'],
+    'diagnostics' => ['study_type', 'body_part_region', 'study_description', 'clinical_indication', 'image_quality', 'order_by', 'performed_by', 'Interpreted_by', 'Imaging_facility'],
+    'treatment_plans' => ['plan', 'intervention', 'problems', 'frequency', 'duration', 'order_by', 'assigned_to', 'date_started', 'date_ended', 'special_instructions', 'patient_education_provided'],
     'progress_notes' => ['focus', 'note', 'author'],
-    'lab_results' => ['test_name', 'test_result'],
-    'lab_diagnostic_results' => ['test_type', 'test_name', 'result', 'normal_range', 'date_ordered', 'date_completed', 'notes'],
+    'lab_results' => ['test_name', 'test_result', 'test_category', 'test_code', 'test_result', 'result_status', 'units', 'reference_range', 'order_by', 'collected_by', 'laboratory_facility', 'clinical_interpretation' ],
     'physical_assessments' => ['assessed_by', 'head_and_neck', 'cardiovascular', 'respiratory', 'abdominal', 'neurological', 'musculoskeletal', 'skin', 'psychiatric']
 ];
 
@@ -98,49 +100,32 @@ $error = "";
 if (isset($_POST['add_vitals'])) {
     $recorded_by = sanitize_input($conn, $_POST['recorded_by'] ?? "");
     $bp = $_POST['bp'] ?? "";
+    $respiratory_rate = $_POST['respiratory_rate'] ?? "";
     $hr = $_POST['hr'] ?? "";
     $temp = $_POST['temp'] ?? "";
     $height = $_POST['height'] ?? "";
     $weight = $_POST['weight'] ?? "";
     $oxygen_saturation = $_POST['oxygen_saturation'] ?? "";
     $pain_scale = $_POST['pain_scale'] ?? "";
+    $general_appearance = $_POST['general_appearance'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate blood pressure format (systolic/diastolic)
-    if (!empty($bp) && !preg_match('/^\d{2,3}\/\d{2,3}$/', $bp)) {
+    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Blood pressure must be in format 'systolic/diastolic' (e.g., 120/80)";
     }
-    // Validate heart rate (40-220 bpm)
-    elseif (!empty($hr) && (!is_numeric($hr) || $hr < 40 || $hr > 220)) {
-        $error = "Heart rate must be between 40-220 bpm";
+    elseif (empty($oxygen_saturation)){
+        $msg = "Oxygen Saturation is requird";
     }
-    // Validate temperature (35-42°C)
-    elseif (!empty($temp) && (!is_numeric($temp) || $temp < 35 || $temp > 42)) {
-        $error = "Temperature must be between 35-42°C";
+    elseif (empty($pain_scale)){
+        $msg = "Pain Scale is requird";
     }
-    // Validate height (30-250 cm)
-    elseif (!empty($height) && (!is_numeric($height) || $height < 30 || $height > 250)) {
-        $error = "Height must be between 30-250 cm";
-    }
-    // Validate weight (0.5-500 kg)
-    elseif (!empty($weight) && (!is_numeric($weight) || $weight < 0.5 || $weight > 500)) {
-        $error = "Weight must be between 0.5-500 kg";
-    }
-    // Validate oxygen saturation (0-100%)
-    elseif (!empty($oxygen_saturation) && (!is_numeric($oxygen_saturation) || $oxygen_saturation < 0 || $oxygen_saturation > 100)) {
-        $error = "Oxygen saturation must be between 0-100%";
-    }
-    // Validate pain scale (0-10)
-    elseif (!empty($pain_scale) && (!is_numeric($pain_scale) || $pain_scale < 0 || $pain_scale > 10)) {
-        $error = "Pain scale must be between 0-10";
-    }
-    // Validate date format if provided
-    elseif (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-        $error = "Date must be in format YYYY-MM-DD.";
+    elseif (empty($general_appearance)){
+        $msg = "General appearance is requird";
     }
     else {
-        $stmt = $conn->prepare("INSERT INTO vitals (patient_id, recorded_by, bp, hr, temp, height, weight, oxygen_saturation, pain_scale, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("isddddiids", $patient_id, $recorded_by, $bp, $hr, $temp, $height, $weight, $oxygen_saturation, $pain_scale, $date);
+        $stmt = $conn->prepare("INSERT INTO vitals (patient_id, recorded_by, bp, respiratory_rate, hr, temp, height, weight, oxygen_saturation, pain_scale, general_appearance, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("isssssssiiis", $patient_id, $recorded_by, $bp, $respiratory_rate, $hr, $temp, $height, $weight, $oxygen_saturation, $pain_scale, $general_appearance, $date);
         if ($stmt->execute()) {
             $msg = "Vitals recorded.";
             // Refresh medical_data for vitals
@@ -169,47 +154,42 @@ if (isset($_GET['delete_vital'])) {
     }
     $stmt->close();
 }
+if (isset($_GET['get_vital'])) {
+    $id = intval($_GET['get_vital']);
+    $stmt = $conn->prepare("SELECT * FROM vitals WHERE id=? AND patient_id=?");
+    $stmt->bind_param("ii", $id, $patient_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        echo json_encode($row);
+    }
+    $stmt->close();
+    exit;
+}
+
 
 // Handle update vitals
 if (isset($_POST['update_vitals'])) {
     $vid = intval($_POST['vital_id']);
+    $recorded_by = $_POST['recorded_by'] ?? "";
     $bp = $_POST['bp'] ?? "";
+    $respiratory_rate = $_POST['respiratory_rate'] ?? "";
     $hr = $_POST['hr'] ?? "";
     $temp = $_POST['temp'] ?? "";
     $height = $_POST['height'] ?? "";
     $weight = $_POST['weight'] ?? "";
     $oxygen_saturation = $_POST['oxygen_saturation'] ?? "";
     $pain_scale = $_POST['pain_scale'] ?? "";
+    $general_appearance = $_POST['general_appearance'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate (same as add)
-    if (!empty($bp) && !preg_match('/^\d{2,3}\/\d{2,3}$/', $bp)) {
+    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Blood pressure must be in format 'systolic/diastolic' (e.g., 120/80)";
     }
-    elseif (!empty($hr) && (!is_numeric($hr) || $hr < 40 || $hr > 220)) {
-        $error = "Heart rate must be between 40-220 bpm";
-    }
-    elseif (!empty($temp) && (!is_numeric($temp) || $temp < 35 || $temp > 42)) {
-        $error = "Temperature must be between 35-42°C";
-    }
-    elseif (!empty($height) && (!is_numeric($height) || $height < 30 || $height > 250)) {
-        $error = "Height must be between 30-250 cm";
-    }
-    elseif (!empty($weight) && (!is_numeric($weight) || $weight < 0.5 || $weight > 500)) {
-        $error = "Weight must be between 0.5-500 kg";
-    }
-    elseif (!empty($oxygen_saturation) && (!is_numeric($oxygen_saturation) || $oxygen_saturation < 0 || $oxygen_saturation > 100)) {
-        $error = "Oxygen saturation must be between 0-100%";
-    }
-    elseif (!empty($pain_scale) && (!is_numeric($pain_scale) || $pain_scale < 0 || $pain_scale > 10)) {
-        $error = "Pain scale must be between 0-10";
-    }
-    elseif (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-        $error = "Date must be in format YYYY-MM-DD.";
-    }
     else {
-        $stmt = $conn->prepare("UPDATE vitals SET bp=?, hr=?, temp=?, height=?, weight=?, oxygen_saturation=?, pain_scale=?, date_taken=? WHERE id=? AND patient_id=?");
-        $stmt->bind_param("sddddiissii", $bp, $hr, $temp, $height, $weight, $oxygen_saturation, $pain_scale, $date, $vid, $patient_id);
+        $stmt = $conn->prepare("UPDATE vitals SET recorded_by=?, bp=?, respiratory_rate=?, hr=?, temp=?, height=?, weight=?, oxygen_saturation=?, pain_scale=?, general_appearance=?, date_taken=? WHERE id=? AND patient_id=?");
+        $stmt->bind_param("sssddddiissii",$recorded_by, $bp, $respiratory_rate, $hr, $temp, $height, $weight, $oxygen_saturation, $pain_scale, $general_appearance, $date, $vid, $patient_id);
         if ($stmt->execute()) {
             $msg = "Vitals updated.";
         } else {
@@ -229,18 +209,6 @@ if (isset($_POST['update_vitals'])) {
     }
 }
 
-if (isset($_GET['get_vital'])) {
-    $id = intval($_GET['get_vital']);
-    $stmt = $conn->prepare("SELECT * FROM vitals WHERE id=? AND patient_id=?");
-    $stmt->bind_param("ii", $id, $patient_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-        echo json_encode($row);
-    }
-    $stmt->close();
-    exit;
-}
 
 
 
@@ -406,9 +374,9 @@ if (isset($_GET['get_med'])) {
 }
 
 // Progress Notes processing (adapted from progress_notes.php)
-if (isset($_POST['add_note'])) {
+if (isset($_POST['add_note'])) {        
     $focus = sanitize_input($conn, $_POST['focus'] ?? "");
-    $note = sanitize_input($conn, $_POST['note'] ?? "");
+    $note  = $_POST['note'] ?? "";
     $author = sanitize_input($conn, $_POST['author'] ?? "");
     $date = $_POST['date'] ?: date("Y-m-d");
 
@@ -505,16 +473,26 @@ if (isset($_GET['get_note'])) {
 
 // Diagnostics processing (adapted from diagnostics.php)
 if (isset($_POST['add_diagnostic'])) {
-    $problem = sanitize_input($conn, $_POST['problem'] ?? "");
-    $diagnosis = sanitize_input($conn, $_POST['diagnosis'] ?? "");
+    $study_type = sanitize_input($conn, $_POST['study_type'] ?? "");
+    $body_part_region = sanitize_input($conn, $_POST['body_part_region'] ?? "");
+    $study_description = sanitize_input($conn, $_POST['study_description'] ?? "");
+    $clinical_indication = $_POST['clinical_indication'] ?? "";
+    $image_quality = sanitize_input($conn, $_POST['image_quality'] ?? "");
+    $order_by = $_POST['order_by'] ?? "";
+    $performed_by = $_POST['performed_by'] ?? "";
+    $interpreted_by =  $_POST['Interpreted_by'] ?? "";
+    $imaging_facility = $_POST['Imaging_facility'] ?? "";
+    $radiology_findings = $_POST['radiology_findings'] ?? "";
+    $impression_conclusion = $_POST['impression_conclusion'] ?? "";
+    $recommendations = $_POST['recommendations'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate date format if provided
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Date must be in format YYYY-MM-DD.";
     } else {
-        $stmt = $conn->prepare("INSERT INTO diagnostics (patient_id, problem, diagnosis, date_diagnosed) VALUES (?,?,?,?)");
-        $stmt->bind_param("isss", $patient_id, $problem, $diagnosis, $date);
+        $stmt = $conn->prepare("INSERT INTO diagnostics (patient_id, study_type, body_part_region, study_description, clinical_indication, image_quality, order_by, performed_by, Interpreted_by, Imaging_facility, radiology_findings, impression_conclusion, recommendations, date_diagnosed) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("isssssssssssss", $patient_id, $study_type, $body_part_region, $study_description, $clinical_indication, $image_quality, $order_by, $performed_by, $interpreted_by, $imaging_facility, $radiology_findings, $impression_conclusion, $recommendations, $date);
         if ($stmt->execute()) {
             $msg = "Diagnostic added.";
             // Refresh medical_data for diagnostics
@@ -553,17 +531,19 @@ if (isset($_GET['delete_diagnostic'])) {
 
 // Handle update diagnostics
 if (isset($_POST['update_diagnostic'])) {
-    $did = intval($_POST['diagnostic_id']);
-    $problem = sanitize_input($conn, $_POST['problem'] ?? "");
-    $diagnosis = sanitize_input($conn, $_POST['diagnosis'] ?? "");
+    $study_type = sanitize_input($conn, $_POST['study_type'] ?? "");
+    $body_part_region = sanitize_input($conn, $_POST['body_part_region'] ?? "");
+    $study_description = sanitize_input($conn, $_POST['study_description'] ?? "");
+    $clinical_indication = sanitize_input($conn, $_POST['clinical_indication'] ?? "");
+    $image_quality = sanitize_input($conn, $_POST['image_quality'] ?? ""); 
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate date format if provided
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Date must be in format YYYY-MM-DD.";
     } else {
-        $stmt = $conn->prepare("UPDATE diagnostics SET problem=?, diagnosis=?, date_diagnosed=? WHERE id=? AND patient_id=?");
-        $stmt->bind_param("sssii", $problem, $diagnosis, $date, $did, $patient_id);
+        $stmt = $conn->prepare("UPDATE diagnostics SET study_type=?, body_part_region=?, study_description=?, clinical_indication=?, image_quality=?, date_diagnosed=? WHERE id=? AND patient_id=?");
+        $stmt->bind_param("ssssssii", $study_type, $body_part_region, $study_description, $clinical_indication, $image_quality, $date, $did, $patient_id);
         if ($stmt->execute()) {
             $msg = "Diagnostic updated.";
         } else {
@@ -599,17 +579,30 @@ if (isset($_GET['get_diagnostic'])) {
 // Treatment Plans processing (adapted from treatment_plans.php)
 if (isset($_POST['add_treatment_plan'])) {
     $plan = sanitize_input($conn, $_POST['plan'] ?? "");
-    $notes = sanitize_input($conn, $_POST['notes'] ?? "");
-    $date = $_POST['date'] ?: date("Y-m-d");
+    $intervention = sanitize_input($conn, $_POST['intervention'] ?? "");
+    $problems = sanitize_input($conn, $_POST['problems'] ?? "");
+    $frequency = sanitize_input($conn, $_POST['frequency'] ?? "");
+    $duration = sanitize_input($conn, $_POST['duration'] ?? "");
+    $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
+    $assigned_to = sanitize_input($conn, $_POST['assigned_to'] ?? "");
+    $date_started = sanitize_input($conn, $_POST['date_started'] ?? "");
+    $date_ended = sanitize_input($conn, $_POST['date_ended'] ?? "");
+    $special_instructions =  $_POST['special_instructions'] ?? "";
+    $patient_education_provided =  $_POST['patient_education_provided'] ?? "";
 
-    // Validate date format if provided
-    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    // Validate date formats if provided
+    if (
+        (!empty($date_started) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_started)) ||
+        (!empty($date_ended) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_ended))
+    ) {
         $error = "Date must be in format YYYY-MM-DD.";
     } else {
-        $stmt = $conn->prepare("INSERT INTO treatment_plans (patient_id, plan, notes, date_planned) VALUES (?,?,?,?)");
-        $stmt->bind_param("isss", $patient_id, $plan, $notes, $date);
+        $stmt = $conn->prepare("INSERT INTO treatment_plans (patient_id, plan, intervention, problems, frequency, duration, order_by, assigned_to, date_started, date_ended, special_instructions, patient_education_provided) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("isssssssssss", $patient_id, $plan, $intervention, $problems, $frequency, $duration, $order_by, $assigned_to, $date_started, $date_ended, $special_instructions, $patient_education_provided);
+
         if ($stmt->execute()) {
             $msg = "Treatment plan added.";
+
             // Refresh medical_data for treatment_plans
             $stmt = $conn->prepare("SELECT * FROM treatment_plans WHERE patient_id = ? ORDER BY id DESC");
             $stmt->bind_param("i", $patient_id);
@@ -625,6 +618,7 @@ if (isset($_POST['add_treatment_plan'])) {
         }
     }
 }
+
 
 if (isset($_GET['delete_treatment_plan'])) {
     $id = intval($_GET['delete_treatment_plan']);
@@ -648,15 +642,24 @@ if (isset($_GET['delete_treatment_plan'])) {
 if (isset($_POST['update_treatment_plan'])) {
     $tid = intval($_POST['treatment_plan_id']);
     $plan = sanitize_input($conn, $_POST['plan'] ?? "");
-    $notes = sanitize_input($conn, $_POST['notes'] ?? "");
-    $date = $_POST['date'] ?: date("Y-m-d");
+    $intervention = sanitize_input($conn, $_POST['intervention'] ?? "");
+    $frequency = sanitize_input($conn, $_POST['frequency'] ?? "");
+    $duration = sanitize_input($conn, $_POST['duration'] ?? "");
+    $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
+    $assigned_to = sanitize_input($conn, $_POST['assigned_to'] ?? "");
+    $date_started = sanitize_input($conn, $_POST['date_started'] ?? "");
+    $date_ended = sanitize_input($conn, $_POST['date_ended'] ?? "");
+    $special_instructions = sanitize_input($conn, $_POST['special_instructions'] ?? "");
+    $patient_education_provided = sanitize_input($conn, $_POST['patient_education_provided'] ?? "");
+
 
     // Validate date format if provided
-    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    if  ( (!empty($date_started) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_started)) ||
+        (!empty($date_ended) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_ended))) {
         $error = "Date must be in format YYYY-MM-DD.";
     } else {
-        $stmt = $conn->prepare("UPDATE treatment_plans SET plan=?, notes=?, date_planned=? WHERE id=? AND patient_id=?");
-        $stmt->bind_param("sssii", $plan, $notes, $date, $tid, $patient_id);
+        $stmt = $conn->prepare("UPDATE treatment_plans SET plan=?, intervention=?, problems=?, frequency=?, duration=?, order_by=?, assigned_to=?, date_started=?, date_ended=?, special_instructions=?, patient_education_provided=?, WHERE id=? AND patient_id=?");
+        $stmt->bind_param("sssssssssssii", $plan, $intervention, $problems,$frequency, $duration, $order_by, $assigned_to, $date_started, $date_ended, $special_instructions, $patient_education_provided, $tid, $patient_id);
         if ($stmt->execute()) {
             $msg = "Treatment plan updated.";
         } else {
@@ -693,34 +696,23 @@ if (isset($_GET['get_treatment_plan'])) {
 if (isset($_POST['add_lab'])) {
     $test = sanitize_input($conn, $_POST['test_name'] ?? "");
     $result = sanitize_input($conn, $_POST['result'] ?? "");
+    $test_category = sanitize_input($conn, $_POST['test_category'] ?? "");
+    $test_code = sanitize_input($conn, $_POST['test_code'] ?? "");
+    $result_status = sanitize_input($conn, $_POST['result_status'] ?? "");
+    $units = sanitize_input($conn, $_POST['units'] ?? "");
+    $reference_range = sanitize_input($conn, $_POST['reference_range'] ?? "");
+    $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
+    $collected_by = sanitize_input($conn, $_POST['collected_by'] ?? "");
+    $labarotary_facility = sanitize_input($conn, $_POST['labarotary_facility'] ?? "");
+    $clinical_interpretation = $_POST['clinical_interpretation'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d H:i:s");
 
     // Validate date format if provided
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
-        $error = "Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
-    }
-    // Validate common lab test results with appropriate ranges
-    elseif (strtolower($test) == "glucose" && is_numeric($result) && ($result < 70 || $result > 200)) {
-        $msg = "Warning: Glucose value ($result mg/dL) is outside normal range (70-200 mg/dL). Please verify.";
-    }
-    elseif (strtolower($test) == "hemoglobin" && is_numeric($result) && ($result < 7 || $result > 20)) {
-        $msg = "Warning: Hemoglobin value ($result g/dL) is outside normal range (7-20 g/dL). Please verify.";
-    }
-    elseif (strtolower($test) == "cholesterol" && is_numeric($result) && ($result < 100 || $result > 300)) {
-        $msg = "Warning: Cholesterol value ($result mg/dL) is outside normal range (100-300 mg/dL). Please verify.";
-    }
-    elseif (strtolower($test) == "wbc" && is_numeric($result) && ($result < 3 || $result > 15)) {
-        $msg = "Warning: White Blood Cell count ($result K/uL) is outside normal range (3-15 K/uL). Please verify.";
-    }
-    elseif (strtolower($test) == "platelet" && is_numeric($result) && ($result < 100 || $result > 500)) {
-        $msg = "Warning: Platelet count ($result K/uL) is outside normal range (100-500 K/uL). Please verify.";
-    }
-    elseif (strtolower($test) == "creatinine" && is_numeric($result) && ($result < 0.5 || $result > 2.0)) {
-        $msg = "Warning: Creatinine value ($result mg/dL) is outside normal range (0.5-2.0 mg/dL). Please verify.";
     }
     else {
-        $stmt = $conn->prepare("INSERT INTO lab_results (patient_id, test_name, test_result, date_taken) VALUES (?,?,?,?)");
-        $stmt->bind_param("isss", $patient_id, $test, $result, $date);
+        $stmt = $conn->prepare("INSERT INTO lab_results (patient_id, test_name, test_result, test_category, test_code, result_status, units, reference_range, order_by, collected_by, labarotary_facility, clinical_interpretation, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("issssssssssss", $patient_id, $test, $result, $test_category, $test_code, $result_status, $units, $reference_range, $order_by, $collected_by, $labarotary_facility, $clinical_interpretation, $date);
         if ($stmt->execute()) {
             $msg = "Lab result added.";
             // Refresh medical_data for lab_results
@@ -762,34 +754,23 @@ if (isset($_POST['update_lab'])) {
     $lid = intval($_POST['lab_id']);
     $test = sanitize_input($conn, $_POST['test_name'] ?? "");
     $result = sanitize_input($conn, $_POST['result'] ?? "");
+    $test_result = sanitize_input($conn, $_POST['test_category'] ?? "");
+    $test_code = sanitize_input($conn, $_POST['test_code'] ?? "");
+    $result_status = sanitize_input($conn, $_POST['result_status'] ?? "");
+    $units = sanitize_input($conn, $_POST['units'] ?? "");
+    $reference_range = sanitize_input($conn, $_POST['reference_range'] ?? "");
+    $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
+    $collected_by = sanitize_input($conn, $_POST['collected_by'] ?? "");
+    $labarotary_facility = sanitize_input($conn, $_POST['labarotary_facility'] ?? "");
     $date = $_POST['date'] ?: date("Y-m-d H:i:s");
 
     // Validate date format if provided
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
         $error = "Invalid date format. Use YYYY-MM-DD or YYYY-MM-DD HH:MM:SS.";
     }
-    // Validate common lab test results with appropriate ranges
-    elseif (strtolower($test) == "glucose" && is_numeric($result) && ($result < 70 || $result > 200)) {
-        $msg = "Warning: Glucose value ($result mg/dL) is outside normal range (70-200 mg/dL). Please verify.";
-    }
-    elseif (strtolower($test) == "hemoglobin" && is_numeric($result) && ($result < 7 || $result > 20)) {
-        $msg = "Warning: Hemoglobin value ($result g/dL) is outside normal range (7-20 g/dL). Please verify.";
-    }
-    elseif (strtolower($test) == "cholesterol" && is_numeric($result) && ($result < 100 || $result > 300)) {
-        $msg = "Warning: Cholesterol value ($result mg/dL) is outside normal range (100-300 mg/dL). Please verify.";
-    }
-    elseif (strtolower($test) == "wbc" && is_numeric($result) && ($result < 3 || $result > 15)) {
-        $msg = "Warning: White Blood Cell count ($result K/uL) is outside normal range (3-15 K/uL). Please verify.";
-    }
-    elseif (strtolower($test) == "platelet" && is_numeric($result) && ($result < 100 || $result > 500)) {
-        $msg = "Warning: Platelet count ($result K/uL) is outside normal range (100-500 K/uL). Please verify.";
-    }
-    elseif (strtolower($test) == "creatinine" && is_numeric($result) && ($result < 0.5 || $result > 2.0)) {
-        $msg = "Warning: Creatinine value ($result mg/dL) is outside normal range (0.5-2.0 mg/dL). Please verify.";
-    }
     else {
-        $stmt = $conn->prepare("UPDATE lab_results SET test_name=?, test_result=?, date_taken=? WHERE id=? AND patient_id=?");
-        $stmt->bind_param("sssii", $test, $result, $date, $lid, $patient_id);
+        $stmt = $conn->prepare("UPDATE lab_results SET test_name=?, test_category=?, test_code=?, test_result=?, result_status=?, units=?, reference_range=?, order_by=?, collected_by=?, laboratory_facility=?, date_taken=? WHERE id=? AND patient_id=?");
+        $stmt->bind_param("sssssssssssii", $test, $test_category, $test_code, $result, $result_status, $units, $reference_range, $order_by, $collected_by, $labarotary_facility, $date, $lid, $patient_id);
         if ($stmt->execute()) {
             $msg = "Lab result updated.";
         } else {
@@ -825,6 +806,7 @@ if (isset($_GET['get_lab'])) {
 // Medical History processing (adapted from medical_history.php)
 if (isset($_POST['add_medical_history'])) {
     $condition = sanitize_input($conn, $_POST['condition_name'] ?? "");
+    $status = sanitize_input($conn, $_POST['status'] ?? "");
     $notes = sanitize_input($conn, $_POST['notes'] ?? "");
     $date = $_POST['date'] ?: date("Y-m-d");
 
@@ -832,8 +814,8 @@ if (isset($_POST['add_medical_history'])) {
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Date must be in format YYYY-MM-DD.";
     } else {
-        $stmt = $conn->prepare("INSERT INTO medical_history (patient_id, condition_name, notes, date_recorded) VALUES (?,?,?,?)");
-        $stmt->bind_param("isss", $patient_id, $condition, $notes, $date);
+        $stmt = $conn->prepare("INSERT INTO medical_history (patient_id, condition_name, status, notes, date_recorded) VALUES (?,?,?,?,?)");
+        $stmt->bind_param("issss", $patient_id, $condition, $status, $notes, $date);
         if ($stmt->execute()) {
             $msg = "Medical history added.";
             // Refresh medical_data for medical_history
@@ -915,114 +897,6 @@ if (isset($_GET['get_medical_history'])) {
     exit;
 }
 
-// Lab Diagnostic Results processing (adapted from lab_diagnostic_results.php)
-if (isset($_POST['add_lab_diag'])) {
-    $test_type = sanitize_input($conn, $_POST['test_type'] ?? "");
-    $test_name = sanitize_input($conn, $_POST['test_name'] ?? "");
-    $result = sanitize_input($conn, $_POST['result'] ?? "");
-    $normal_range = sanitize_input($conn, $_POST['normal_range'] ?? "");
-    $date_ordered = $_POST['date_ordered'] ?: date("Y-m-d");
-    $date_completed = $_POST['date_completed'] ?: null;
-    $notes = sanitize_input($conn, $_POST['notes'] ?? "");
-
-    // Validate date format if provided
-    if (!empty($_POST['date_ordered']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_ordered)) {
-        $error = "Date ordered must be in format YYYY-MM-DD.";
-    }
-    elseif (!empty($_POST['date_completed']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_completed)) {
-        $error = "Date completed must be in format YYYY-MM-DD.";
-    }
-    elseif (!empty($date_ordered) && !empty($date_completed) && strtotime($date_ordered) > strtotime($date_completed)) {
-        $error = "Date completed must be after date ordered.";
-    }
-    else {
-        $stmt = $conn->prepare("INSERT INTO lab_diagnostic_results (patient_id, test_type, test_name, result, normal_range, date_ordered, date_completed, notes) VALUES (?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("isssssss", $patient_id, $test_type, $test_name, $result, $normal_range, $date_ordered, $date_completed, $notes);
-        if ($stmt->execute()) {
-            $msg = "Lab diagnostic result added.";
-            // Refresh medical_data for lab_diagnostic_results
-            $stmt = $conn->prepare("SELECT * FROM lab_diagnostic_results WHERE patient_id = ? ORDER BY id DESC");
-            $stmt->bind_param("i", $patient_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            $medical_data['lab_diagnostic_results'] = [];
-            while ($row = $result->fetch_assoc()) {
-                $medical_data['lab_diagnostic_results'][] = $row;
-            }
-            $stmt->close();
-        } else {
-            $error = "Error: " . $stmt->error;
-        }
-    }
-}
-
-if (isset($_GET['delete_lab_diag'])) {
-    $id = intval($_GET['delete_lab_diag']);
-    $stmt = $conn->prepare("DELETE FROM lab_diagnostic_results WHERE id=? AND patient_id=?");
-    $stmt->bind_param("ii", $id, $patient_id);
-    if ($stmt->execute()) {
-        header("Location: patient_dashboard.php?patient_id=$patient_id&section=lab_diagnostic_results");
-        exit();
-    }
-    $stmt->close();
-}
-
-// Handle update lab diagnostic results
-if (isset($_POST['update_lab_diag'])) {
-    $ldid = intval($_POST['lab_diag_id']);
-    $test_type = sanitize_input($conn, $_POST['test_type'] ?? "");
-    $test_name = sanitize_input($conn, $_POST['test_name'] ?? "");
-    $result = sanitize_input($conn, $_POST['result'] ?? "");
-    $normal_range = sanitize_input($conn, $_POST['normal_range'] ?? "");
-    $date_ordered = $_POST['date_ordered'] ?: date("Y-m-d");
-    $date_completed = $_POST['date_completed'] ?: null;
-    $notes = sanitize_input($conn, $_POST['notes'] ?? "");
-
-    // Validate date format if provided
-    if (!empty($_POST['date_ordered']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_ordered)) {
-        $error = "Date ordered must be in format YYYY-MM-DD.";
-    }
-    elseif (!empty($_POST['date_completed']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_completed)) {
-        $error = "Date completed must be in format YYYY-MM-DD.";
-    }
-    elseif (!empty($date_ordered) && !empty($date_completed) && strtotime($date_ordered) > strtotime($date_completed)) {
-        $error = "Date completed must be after date ordered.";
-    }
-    else {
-        $stmt = $conn->prepare("UPDATE lab_diagnostic_results SET test_type=?, test_name=?, result=?, normal_range=?, date_ordered=?, date_completed=?, notes=? WHERE id=? AND patient_id=?");
-        $stmt->bind_param("sssssssii", $test_type, $test_name, $result, $normal_range, $date_ordered, $date_completed, $notes, $ldid, $patient_id);
-        if ($stmt->execute()) {
-            $msg = "Lab diagnostic result updated.";
-        } else {
-            $error = "Error updating result: " . $stmt->error;
-        }
-        $stmt->close();
-        // Refresh lab_diagnostic_results data
-        $stmt = $conn->prepare("SELECT * FROM lab_diagnostic_results WHERE patient_id = ? ORDER BY id DESC");
-        $stmt->bind_param("i", $patient_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $medical_data['lab_diagnostic_results'] = [];
-        while ($row = $result->fetch_assoc()) {
-            $medical_data['lab_diagnostic_results'][] = $row;
-        }
-        $stmt->close();
-    }
-}
-
-if (isset($_GET['get_lab_diag'])) {
-    $id = intval($_GET['get_lab_diag']);
-    $stmt = $conn->prepare("SELECT * FROM lab_diagnostic_results WHERE id=? AND patient_id=?");
-    $stmt->bind_param("ii", $id, $patient_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
-        echo json_encode($row);
-    }
-    $stmt->close();
-    exit;
-}
-
 // Physical Assessments processing (adapted from other sections)
 if (isset($_POST['add_physical_assessment'])) {
     $assessed_by = sanitize_input($conn, $_POST['assessed_by'] ?? "");
@@ -1033,7 +907,7 @@ if (isset($_POST['add_physical_assessment'])) {
     $neurological = sanitize_input($conn, $_POST['neurological'] ?? "");
     $musculoskeletal = sanitize_input($conn, $_POST['musculoskeletal'] ?? "");
     $skin = sanitize_input($conn, $_POST['skin'] ?? "");
-    $psychiatric = sanitize_input($conn, $_POST['psychiatric'] ?? "");
+    $psychiatric = $_POST['psychiatric'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate date format if provided
@@ -1166,7 +1040,9 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
     }
 
     .card {
+        margin: 1rem 0 0 0;
         border-radius: 0.75rem;
+        
     }
 
     .table-responsive {
@@ -1184,6 +1060,12 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
         width: 5.75rem;
         display: flex;
         flex-direction: column;
+    }
+    .module{
+        width: 19rem;
+    }
+    .content{
+        width: 77vw;
     }
 </style>
 
@@ -1282,8 +1164,16 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                         <input type="hidden" name="vital_id" id="vital_id">
                         <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                         <div class="mb-3">
+                            <label for="recorded_by_edit" class="form-label">Recorded By</label>
+                            <input type="text" class="form-control" name="recorded_by" id="recorded_by_edit" placeholder="Recorded By" required>
+                        </div>
+                        <div class="mb-3">
                             <label for="bp_edit" class="form-label">Blood Pressure</label>
                             <input type="text" class="form-control" name="bp" id="bp_edit" placeholder="BP (e.g., 120/80)" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rr_edit" class="form-label">Respiratory Rate</label>
+                            <input type="text" class="form-control" name="respiratory_rate" id="rr_edit" placeholder="CPM (e.g., 120/80)" required>
                         </div>
                         <div class="mb-3">
                             <label for="hr_edit" class="form-label">Heart Rate</label>
@@ -1307,9 +1197,13 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                         </div>
                         <div class="mb-3">
                             <label for="pain_scale_edit" class="form-label">Pain Scale</label>
-                            <input type="number" class="form-control" name="pain_scale" id="pain_scale_edit" placeholder="Pain Scale (0-10)" min="0" max="10">
+                              <input type="number" class="form-control" name="pain_scale" id="pain_scale_edit" placeholder="Pain Scale (0-10)" min="0" max="10">
                         </div>
                         <div class="mb-3">
+                            <label for="ga_edit" class="form-label">General Appearance</label>
+                            <textarea type="text" class="form-control" name="general_appearance" id="ga_edit" placeholder="Patient appears comfortable, alert and oriented" required></textarea>
+                        </div>
+                        <div class="mb-3">  
                             <label for="date_edit" class="form-label">Date</label>
                             <input type="date" class="form-control" name="date" id="date_edit">
                         </div>
@@ -1357,7 +1251,7 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
     </div>
 </div>
 
-<!-- Edit Modal for Diagnostics -->
+<!-- Edit Modal for Diagnostics /  -->
 <div class="modal fade" id="editDiagnosticModal" tabindex="-1" aria-labelledby="editDiagnosticModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1370,8 +1264,19 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                     <input type="hidden" name="diagnostic_id" id="diagnostic_id">
                     <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                     <div class="mb-3">
-                        <label for="problem_edit" class="form-label">Problem</label>
-                        <input type="text" class="form-control" name="problem" id="problem_edit" placeholder="Problem" required>
+                    <label for="study_type_edit" class="form-label">Select Study Type</label>
+                        <select class="form-control" name="study_type" id="study_type_edit" required>
+                        <option value="">Select Study Type</option>
+                            <option value="X-RAY" <?php if (($_POST['study_type'] ?? '') == 'X-RAY') echo 'selected'; ?>>X-RAY</option>
+                            <option value="CT SCAN" <?php if (($_POST['study_type'] ?? '') == 'CT SCAN') echo 'selected'; ?>>CT SCAN</option>
+                            <option value="MRI" <?php if (($_POST['study_type'] ?? '') == 'MRI') echo 'selected'; ?>>MRI</option>
+                            <option value="Utrasound" <?php if (($_POST['study_type'] ?? '') == 'Utrasound') echo 'selected'; ?>>Utrasound</option>
+                            <option value="Nuclear Medicine" <?php if (($_POST['study_type'] ?? '') == 'Nuclear Medicine') echo 'selected'; ?>>Nuclear Medicine</option>
+                            <option value="PET Scan" <?php if (($_POST['study_type'] ?? '') == 'PET Scan') echo 'selected'; ?>>PET Scan</option>
+                            <option value="Mammography" <?php if (($_POST['study_type'] ?? '') == 'Mammography') echo 'selected'; ?>>Mammography</option>
+                            <option value="Fluroscopy" <?php if (($_POST['study_type'] ?? '') == 'Fluroscopy') echo 'selected'; ?>>Fluroscopy</option>
+                            <option value="other" <?php if (($_POST['study_type'] ?? '') == 'other') echo 'selected'; ?>>Other</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="diagnosis_edit" class="form-label">Diagnosis</label>
@@ -1404,16 +1309,52 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                     <input type="hidden" name="treatment_plan_id" id="treatment_plan_id">
                     <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                     <div class="mb-3">
-                        <label for="plan_edit" class="form-label">Treatment Plan</label>
-                        <input type="text" class="form-control" name="plan" id="plan_edit" placeholder="Treatment Plan" required>
+                        <label for="plan_edit" class="form-label">Plan Type</label>
+                        <select class="form-control" name="plan" id="route_select" required>
+                            <option value="">Select Plan Type</option>
+                            <option value="Physician Order">Physician Order</option>
+                            <option value="Nursing Intervention">Nursing Intervention</option>
+                            <option value="Procedure">Procedure</option>
+                            <option value="Therapy">Therapy</option>
+                            <option value="Patient Education">Patient Education</option>
+                            <option value="Referral">Referral</option>
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label for="notes_plan_edit" class="form-label">Notes</label>
-                        <textarea class="form-control" name="notes" id="notes_plan_edit" rows="3" placeholder="Notes"></textarea>
+                        <label for="problems_plan_edit" class="form-label">Intervention Description</label>
+                        <textarea class="form-control" name="problems" id="problems_plan_edit" rows="3" placeholder="Related Problems"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="date_plan_edit" class="form-label">Date Planned</label>
-                        <input type="date" class="form-control" name="date" id="date_plan_edit">
+                        <label for="frequency_plan_edit" class="form-label">Frequency</label>
+                        <textarea class="form-control" name="frequency" id="frequency_plan_edit" rows="3" placeholder="e.g., 2 weeks, Until discharge"></textarea>
+                    </div>
+                    <div class="mb-3">  
+                        <label for="duration_plan_edit" class="form-label">Duration</label>
+                        <textarea class="form-control" name="duration" id="duration_plan_edit" rows="3" placeholder="e.g., Daily, BIR, PRN"></textarea>
+                    </div>
+                    <div class="mb-3">  
+                        <label for="order_by_plan_edit" class="form-label">Order_by</label>
+                        <textarea class="form-control" name="order_by" id="order_by_plan_edit" rows="3" placeholder="Healthcare provider name"></textarea>
+                    </div>
+                    <div class="mb-3">  
+                        <label for="assigned_to_plan_edit" class="form-label">Assigned_to</label>
+                        <textarea class="form-control" name="assigned_to" id="assigned_to_plan_edit" rows="3" placeholder="Responsible Healthcare provider"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_started_plan_edit" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" name="date_started" id="date_started_plan_edit">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_ended_plan_edit" class="form-label">End Date</label>
+                        <input type="date" class="form-control" name="date_ended" id="date_ended_plan_edit">
+                    </div>
+                    <div class="mb-3">
+                        <label for="special_instructions_plan_edit" class="form-label">Special Instructions</label>
+                        <textarea class="form-control" name="special_instructions" id="special_instructions_plan_edit" rows="4" placeholder="Special Instructions or instructions..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="patient_education_provided_plan_edit" class="form-label">Patient Education Provided</label>
+                        <textarea class="form-control" name="patient_education_provided" id="patient_education_provided_plan_edit" rows="4" placeholder="Education provided to patient and/or family..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1430,25 +1371,79 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form method="post" id="editLabForm">
+                <!-- Edit Modal Header Lab Results -->
                 <div class="modal-header">
                     <h5 class="modal-title" id="editLabModalLabel">Edit Lab Result</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+                <!-- Edit Modal Body Lab Results -->
                 <div class="modal-body">
                     <input type="hidden" name="lab_id" id="lab_id">
                     <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-                    <div class="mb-3">
-                        <label for="test_name_edit" class="form-label">Test Name</label>
-                        <input type="text" class="form-control" name="test_name" id="test_name_edit" placeholder="Test Name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="result_edit" class="form-label">Result</label>
-                        <input type="text" class="form-control" name="result" id="result_edit" placeholder="Result" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_lab_edit" class="form-label">Date Taken</label>
-                        <input type="datetime-local" class="form-control" name="date" id="date_lab_edit" required>
-                    </div>
+                <!-- Edit Modal Test Name Lab Results -->
+                <div class="mb-3">
+                    <label for="test_name_edit" class="form-label">Test Name</label>
+                    <input type="text" class="form-control" name="test_name" id="test_name_edit" placeholder="Test Name" required>
+                </div>
+                <!-- Edit Modal Result Lab Results -->
+                <div class="mb-3">
+                    <label for="result_edit" class="form-label">Result</label>
+                    <input type="text" class="form-control" name="result" id="result_edit" placeholder="Result" required>
+                </div>
+                <!-- Edit Modal Header Test Category Results -->
+                <div class="mb-3">
+                    <label for="test_category_edit" class="form-label">Test Category</label>
+                    <select class="form-control" name="test_category_edit" id="test_category_edit" required>
+                            <option value="">Select Test Category</option>
+                            <option value="Hematology">Physician Order</option>
+                            <option value="Nursing Intervention">Nursing Intervention</option>
+                            <option value="Procedure">Procedure</option>
+                            <option value="Therapy">Therapy</option>
+                            <option value="Patient Education">Patient Education</option>
+                            <option value="Referral">Referral</option>
+                    </select>
+                    <input type="text" class="form-control mt-1" name="test_category_edit" id="test_category_edit" placeholder="Specify Test Category" style="display: none;">
+                </div>
+                <div class="mb-3">
+                    <label for="test_category_edit" class="form-label">Test Category</label>
+                    <input type="text" class="form-control" name="test_category" id="test_category_edit" placeholder="CBC..." required>
+                </div>
+                <div class="mb-3">
+                    <label for="test_code_edit" class="form-label">Test Code</label>
+                    <input type="text" class="form-control" name="test_code" id="test_code_edit" placeholder="CBC..." required>
+                </div>
+                <div class="mb-3">
+                    <label for="result_status_edit" class="form-label">Result</label>
+                    <input type="text" class="form-control" name="result_status" id="result_status_edit" placeholder="Result Status" required>
+                </div>
+                <div class="mb-3">
+                    <label for="unit_edit" class="form-label">Unit</label>
+                    <input type="text" class="form-control" name="unit" id="unit_edit" placeholder="mg/dl" required>
+                </div>
+                <div class="mb-3">
+                    <label for="reference_range_edit" class="form-label">Reference Range</label>
+                    <input type="text" class="form-control" name="reference_range" id="reference_range_edit" placeholder="e.g., 3.5-5.0" required>
+                </div>
+                <div class="mb-3">
+                    <label for="order_by_edit" class="form-label">Order by</label>
+                    <input type="text" class="form-control" name="order_by" id="order_by_edit" placeholder="Dr. Name, MD" required>
+                </div>
+                <div class="mb-3">
+                    <label for="collected_by_edit" class="form-label">Collected by</label>
+                    <input type="text" class="form-control" name="collected_by" id="collected_by_edit" placeholder="Phlebotomist name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="laboratory_facilty_edit" class="form-label">Laboratory facilty</label>
+                    <input type="text" class="form-control" name="laboratory_facilty" id="laboratory_facilty_edit" placeholder="Lab facility name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="clinical_interpretation_provided_plan_edit" class="form-label">Clinical Interpretation</label>
+                    <textarea class="form-control" name="clinical_interpretation" id="clinical_interpretation_provided_plan_edit" rows="4" placeholder="Clinical significance and interpretation" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="date_lab_edit" class="form-label">Date Taken</label>
+                    <input type="datetime-local" class="form-control" name="date" id="date_lab_edit" required>
+                </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" name="update_lab" class="btn btn-primary">Save changes</button>
@@ -1558,64 +1553,50 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
 <div class="container-fluid mt-4">
     <div class="row">
         <!-- Sidebar for EHR Modules -->
-        <div class="col-md-3">
+        <div class="col-md-3 module">
             <!-- EHR Modules -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0"><i class="bi bi-grid me-2"></i>EHR Modules</h6>
                 </div>
                 <div class="card-body">
-                    <button onclick="window.location.href='modules/physical_assessments.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('physical_assessment')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-clipboard-check me-2"></i>Physical Assessment
                     </button>
-                    <button onclick="window.location.href='modules/vitals.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('vitals')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-heart-pulse me-2"></i>Record Vitals
                     </button>
-                    <button onclick="window.location.href='modules/medications.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('medications')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-capsule me-2"></i>Enter Medications
                     </button>
-                    <button onclick="window.location.href='modules/progress_notes.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('progress_notes')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-pencil-square me-2"></i>Progress Notes
                     </button>
-                    <button onclick="window.location.href='modules/diagnostics.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
-                        <i class="bi bi-search me-2"></i>Diagnostics
+                    <button onclick="showSection('diagnostics')" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="bi bi-search me-2"></i>Diagnostics / Imaging
                     </button>
-                    <button onclick="window.location.href='modules/treatment_plans.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('treatment_plans')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-journal-text me-2"></i>Treatment Plans
                     </button>
-                    <button onclick="window.location.href='modules/lab_results.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('lab_results')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-flask me-2"></i>Lab Results
                     </button>
-                    <button onclick="window.location.href='modules/medical_history.php?patient_id=' + patient_id" class="btn btn-outline-primary w-100 mb-2">
+                    <button onclick="showSection('medical_history')" class="btn btn-outline-primary w-100 mb-2">
                         <i class="bi bi-clipboard-data me-2"></i>Medical History
-                    </button>
-                    <button onclick="showSection('lab_diagnostic_results')" class="btn btn-outline-primary w-100 mb-2">
-                        <i class="bi bi-clipboard-check me-2"></i>Lab Diagnostic Results
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="col-md-9">
-            <div class="card mb-4">
+        <div class="col-md-9 ">
+            <div class="card mb-4 content ">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Patient Dashboard - <?php echo htmlspecialchars($patient['fullname']); ?></h5>
                 </div>
                 <div class="card-body">
                     <!-- Default Content: Patient Information and Records -->
                     <div id="default-content">
-                        <!-- Search Form -->
-                        <div class="card mb-4">
-                            <div class="card-body">
-                                <form method="get" class="d-flex">
-                                    <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-                                    <input type="text" class="form-control me-2" name="search" placeholder="Search medical records..." value="<?php echo htmlspecialchars($search); ?>">
-                                    <button type="submit" class="btn btn-primary me-2">Search</button>
-                                    <a href="?patient_id=<?php echo $patient_id; ?>" class="btn btn-secondary">Clear</a>
-                                </form>
-                            </div>
-                        </div>
                         <!-- Patient Information -->
                         <div class="card mb-4">
                             <div class="card-header">
@@ -1643,12 +1624,11 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                             $recordTypes = [
                                 ['key' => 'medical_history', 'title' => 'Medical History', 'fields' => ['condition_name', 'notes', 'status'], 'icon' => 'bi-clipboard-data'],
                                 ['key' => 'medications', 'title' => 'Medications', 'fields' => ['medication', 'dose', 'start_date', 'notes'], 'icon' => 'bi-capsule'],
-                                ['key' => 'vitals', 'title' => 'Vital Signs', 'fields' => ['recorded_by', 'bp', 'hr', 'temp', 'height', 'weight', 'date_taken'], 'icon' => 'bi-heart-pulse'],
-                                ['key' => 'diagnostics', 'title' => 'Diagnostics', 'fields' => ['problem', 'diagnosis', 'date_diagnosed'], 'icon' => 'bi-search'],
-                                ['key' => 'treatment_plans', 'title' => 'Treatment Plans', 'fields' => ['plan', 'notes', 'date_planned'], 'icon' => 'bi-journal-text'],
+                                ['key' => 'vitals', 'title' => 'Vital Signs', 'fields' => ['recorded_by', 'bp', 'respiratory_rate', 'hr', 'temp', 'date_taken'], 'icon' => 'bi-heart-pulse'],
+                                ['key' => 'diagnostics', 'title' => 'Diagnostics / Imaging', 'fields' => ['study_type', 'body_part_region', 'date_diagnosed'], 'icon' => 'bi-search'],
+                                ['key' => 'treatment_plans', 'title' => 'Treatment Plans', 'fields' => ['plan', 'intervention', 'problems',], 'icon' => 'bi-journal-text'],
                                 ['key' => 'progress_notes', 'title' => 'Progress Notes', 'fields' => ['focus', 'note', 'author'], 'icon' => 'bi-pencil-square'],
-                                ['key' => 'lab_results', 'title' => 'Lab Results', 'fields' => ['test_name', 'test_result', 'date_taken'], 'icon' => 'bi-flask'],
-                                ['key' => 'lab_diagnostic_results', 'title' => 'Lab Diagnostic Results', 'fields' => ['test_type', 'test_name', 'result', 'normal_range', 'date_ordered', 'date_completed', 'notes'], 'icon' => 'bi-clipboard-data'],
+                                ['key' => 'lab_results', 'title' => 'Lab Results', 'fields' => ['test_name', 'test_category', 'test_code', 'date_taken'], 'icon' => 'bi-flask'],
                                 ['key' => 'physical_assessments', 'title' => 'Physical Assessments', 'fields' => ['assessed_by', 'head_and_neck', 'cardiovascular', 'respiratory', 'date_assessed'], 'icon' => 'bi-clipboard-check']
                             ];
 
@@ -1722,34 +1702,27 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                                 <div class="col-md-2"><input type="text" class="form-control" name="recorded_by" placeholder="Recorded By" value="<?php echo htmlspecialchars($_POST['recorded_by'] ?? ''); ?>" required></div>
                                 <div class="col-md-2"><input class="form-control" name="bp" placeholder="BP (e.g., 120/80)" value="<?php echo htmlspecialchars($_POST['bp'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input type="number" class="form-control" name="hr" placeholder="HR (bpm)" value="<?php echo htmlspecialchars($_POST['hr'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input type="number" step="0.1" class="form-control" name="temp" placeholder="Temp (°C)" value="<?php echo htmlspecialchars($_POST['temp'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input type="number" step="0.1" class="form-control" name="height" placeholder="Height (cm)" value="<?php echo htmlspecialchars($_POST['height'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input type="number" step="0.1" class="form-control" name="weight" placeholder="Weight (kg)" value="<?php echo htmlspecialchars($_POST['weight'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input type="number" class="form-control" name="oxygen_saturation" placeholder="O2 Sat (%)" min="0" max="100" value="<?php echo htmlspecialchars($_POST['oxygen_saturation'] ?? ''); ?>"></div>
+                                <div class="col-md-2"><input class="form-control" name="respiratory_rate" placeholder="RR (cpm)" value="<?php echo htmlspecialchars($_POST['respiratory_rate'] ?? ''); ?>" required></div>
+                                <div class="col-md-2"><input class="form-control" name="hr" placeholder="HR (bpm)" value="<?php echo htmlspecialchars($_POST['hr'] ?? ''); ?>" required></div>
+                                <div class="col-md-2"><input step="0.1" class="form-control" name="temp" placeholder="Temp (°C)" value="<?php echo htmlspecialchars($_POST['temp'] ?? ''); ?>" required></div>
+                                <div class="col-md-2"><input  step="0.1" class="form-control" name="height" placeholder="Height (cm)" value="<?php echo htmlspecialchars($_POST['height'] ?? ''); ?>" required></div>
+                                <div class="col-md-2"><input step="0.1" class="form-control" name="weight" placeholder="Weight (kg)" value="<?php echo htmlspecialchars($_POST['weight'] ?? ''); ?>" required></div>
+                                <div class="col-md-2"><input class="form-control" name="oxygen_saturation" placeholder="O2 Sat (%)" min="0" max="100" value="<?php echo htmlspecialchars($_POST['oxygen_saturation'] ?? ''); ?>"></div>
                                 <div class="col-md-2"><input type="number" class="form-control" name="pain_scale" placeholder="Pain (0-10)" min="0" max="10" value="<?php echo htmlspecialchars($_POST['pain_scale'] ?? ''); ?>"></div>
                                 <div class="col-md-2"><input type="date" class="form-control" name="date" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>"></div>
+                                <div class="col-md-7"><textarea style="white-space: pre-wrap;" class="form-control" name="general_appearance" placeholder="General Appearance(Patient appears comfortable, alert and oriented" rows="4"><?php echo htmlspecialchars($_POST['general_appearance'] ?? ''); ?></textarea></div>
                                 <div class="col-12"><button name="add_vitals" class="btn btn-primary">Add Vitals</button></div>
                             </form>
                         </div>
 
-                        <!-- Search Form for Vitals -->
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <input type="text" class="form-control me-2" id="vitals-search" placeholder="Search vitals records...">
-                                    <button type="button" class="btn btn-secondary" onclick="clearSearch('vitals')">Clear</button>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Vitals Table -->
                         <div class="card p-3">
-                            <table class="table table-sm table-bordered" id="vitals-table">
+                            <table class="table table-sm table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Recorded By</th>
                                         <th>BP</th>
+                                        <th>RR</th>
                                         <th>HR</th>
                                         <th>Temp</th>
                                         <th>Height</th>
@@ -1767,6 +1740,7 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                         <tr>
                                             <td><?php echo htmlspecialchars($r['recorded_by']); ?></td>
                                             <td><?php echo htmlspecialchars($r['bp']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['respiratory_rate']); ?></td>
                                             <td><?php echo htmlspecialchars($r['hr']); ?></td>
                                             <td><?php echo htmlspecialchars($r['temp']); ?></td>
                                             <td><?php echo htmlspecialchars($r['height']); ?></td>
@@ -1889,10 +1863,10 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                             <table class="table table-sm table-bordered">
                                 <thead>
                                     <tr>
+                                        <th>Prescriber</th>
                                         <th>Medication</th>
                                         <th>Dose</th>
                                         <th>Start Date</th>
-                                        <th>Frequency</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -1901,10 +1875,10 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                     $medications = $medical_data['medications'] ?? [];
                                     foreach ($medications as $r): ?>
                                         <tr>
+                                            <td><?php echo htmlspecialchars($r['prescriber']); ?></td>
                                             <td><?php echo htmlspecialchars($r['medication']); ?></td>
                                             <td><?php echo htmlspecialchars($r['dose']); ?></td>
                                             <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($r['start_date']))); ?></td>
-                                            <td><?php echo htmlspecialchars($r['notes']); ?></td>
                                             <td>
                                                 <a class="btn btn-sm btn-danger" href="?delete_med=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>&section=medications" onclick="return confirm('Delete?')">
                                                     <i class="bi bi-trash"></i> Delete
@@ -1946,7 +1920,9 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                             <form method="post" class="row g-2">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                                 <div class="col-md-12"><input class="form-control" name="focus" placeholder="Focus" value="<?php echo htmlspecialchars($_POST['focus'] ?? ''); ?>" required></div>
-                                <div class="col-md-6"><textarea class="form-control" name="note" placeholder="Progress note" rows="3" required><?php echo htmlspecialchars($_POST['note'] ?? ''); ?></textarea></div>
+                                <textarea class="form-control" name="note" placeholder="Progress note" rows="3" required><?php 
+                                    echo htmlspecialchars($_POST['note'] ?? ''); 
+                                ?></textarea>
                                 <div class="col-md-3"><input class="form-control" name="author" placeholder="Author" value="<?php echo htmlspecialchars($_POST['author'] ?? ''); ?>" required></div>
                                 <div class="col-md-3"><input type="date" class="form-control" name="date" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>" required></div>
                                 <div class="col-12"><button name="add_note" class="btn btn-primary">Add Note</button></div>
@@ -1971,7 +1947,7 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                     foreach ($notes as $r): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($r['focus'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars($r['note'] ?? 'N/A'); ?></td>
+                                            <td style="white-space: pre-wrap;"><?php echo htmlspecialchars($r['note']); ?></td>
                                             <td><?php echo htmlspecialchars($r['author'] ?? 'N/A'); ?></td>
                                             <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($r['date_written'] ?? ''))); ?></td>
                                             <td>
@@ -1993,7 +1969,7 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
 
                     <!-- Diagnostics Section (Hidden by default) -->
                     <div id="diagnostics-content" style="display: none;">
-                        <h4>Diagnostics</h4>
+                        <h4>Diagnostics / Imaging</h4>
 
                         <!-- Feedback messages for diagnostics -->
                         <?php if (!empty($msg)): ?>
@@ -2014,8 +1990,41 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                         <div class="card p-3 mb-3">
                             <form method="post" class="row g-2">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-                                <div class="col-md-4"><input class="form-control" name="problem" placeholder="Problem" value="<?php echo htmlspecialchars($_POST['problem'] ?? ''); ?>" required></div>
-                                <div class="col-md-4"><input class="form-control" name="diagnosis" placeholder="Diagnosis" value="<?php echo htmlspecialchars($_POST['diagnosis'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"> 
+                                    <select class="form-control" name="study_type" id="study_type" required>
+                                            <option value="">Select Study Type</option>
+                                            <option value="X-RAY" <?php if (($_POST['study_type'] ?? '') == 'X-RAY') echo 'selected'; ?>>X-RAY</option>
+                                            <option value="CT SCAN" <?php if (($_POST['study_type'] ?? '') == 'CT SCAN') echo 'selected'; ?>>CT SCAN</option>
+                                            <option value="MRI" <?php if (($_POST['study_type'] ?? '') == 'MRI') echo 'selected'; ?>>MRI</option>
+                                            <option value="Utrasound" <?php if (($_POST['study_type'] ?? '') == 'Utrasound') echo 'selected'; ?>>Utrasound</option>
+                                            <option value="Nuclear Medicine" <?php if (($_POST['study_type'] ?? '') == 'Nuclear Medicine') echo 'selected'; ?>>Nuclear Medicine</option>
+                                            <option value="PET Scan" <?php if (($_POST['study_type'] ?? '') == 'PET Scan') echo 'selected'; ?>>PET Scan</option>
+                                            <option value="Mammography" <?php if (($_POST['study_type'] ?? '') == 'Mammography') echo 'selected'; ?>>Mammography</option>
+                                            <option value="Fluroscopy" <?php if (($_POST['study_type'] ?? '') == 'Fluroscopy') echo 'selected'; ?>>Fluroscopy</option>
+                                            <option value="other" <?php if (($_POST['study_type'] ?? '') == 'other') echo 'selected'; ?>>Other</option>
+                                        </select>
+                                        <input type="text" class="form-control mt-1" name="custom_study_type" id="custom_study_type" placeholder="Specify Study Type" style="display: none;" value="<?php echo htmlspecialchars($_POST['custom_study_type'] ?? ''); ?>">
+                                    </div>
+                                        <div class="col-md-4"><input class="form-control" name="body_part_region" placeholder="Body part/region(e.g., Chest, Left Knee)" value="<?php echo htmlspecialchars($_POST['body_part_region'] ?? ''); ?>" required></div>
+                                        <div class="col-md-4"><input class="form-control" name="study_description" placeholder="Study Description" value="<?php echo htmlspecialchars($_POST['study_description'] ?? ''); ?>" required></div>
+                                        <div class="col-md-4"><input class="form-control" name="clinical_indication" placeholder="Clinical Indication(Reason for ordering the study)" value="<?php echo htmlspecialchars($_POST['clinical_indication'] ?? ''); ?>" required></div>
+                                    <div class="col-md-4"> 
+                                        <select class="form-control" name="image_quality" id="image_quality" required>
+                                            <option value="">Select Image quality</option>
+                                            <option value="Excellent" <?php if (($_POST['image_quality'] ?? '') == 'Excellent') echo 'selected'; ?>>Excellent</option>
+                                            <option value="Good" <?php if (($_POST['image_quality'] ?? '') == 'Good') echo 'selected'; ?>>Good</option>
+                                            <option value="Fair" <?php if (($_POST['image_quality'] ?? '') == 'Fair') echo 'selected'; ?>>Fair</option>
+                                            <option value="Poor" <?php if (($_POST['image_quality'] ?? '') == 'Poor') echo 'selected'; ?>>Poor</option>
+                                            <option value="Limited" <?php if (($_POST['image_quality'] ?? '') == 'Limited') echo 'selected'; ?>>Limited</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4"><input class="form-control" name="order_by" placeholder="Order by(Dr.Name, MD)" value="<?php echo htmlspecialchars($_POST['order_by'] ?? ''); ?>" required></div>
+                                    <div class="col-md-4"><input class="form-control" name="performed_by" placeholder="Performed by(Technologist name)" value="<?php echo htmlspecialchars($_POST['performed_by'] ?? ''); ?>" required></div>
+                                    <div class="col-md-4"><input class="form-control" name="Interpreted_by" placeholder="Interpreted by(Dr.Name, MD)" value="<?php echo htmlspecialchars($_POST['Interpreted_by'] ?? ''); ?>" required></div>
+                                    <div class="col-md-4"><input class="form-control" name="Imaging_facility" placeholder="Imaging Facility(Facility name)" value="<?php echo htmlspecialchars($_POST['Imaging_facility'] ?? ''); ?>" required></div>
+                                    <div class="col-md-12"><textarea class="form-control" name="radiology_findings" placeholder="Radiological Findings(Detailed findings from the study)" rows="4" value="<?php echo htmlspecialchars($_POST['radiology_findings'] ?? ''); ?>" required></textarea></div>
+                                    <div class="col-md-12"><textarea class="form-control" name="impression_conclusion" placeholder="Impression / Conclusion(Radiologist's impression and conclusion)" rows="4" value="<?php echo htmlspecialchars($_POST['impression_conclusion'] ?? ''); ?>" required></textarea></div>
+                                    <div class="col-md-12"><textarea class="form-control" name="recommendations" placeholder="Recommendations( Follow-up recommendations)" rows="4" value="<?php echo htmlspecialchars($_POST['recommendations'] ?? ''); ?>" required></textarea></div>
                                 <div class="col-md-4"><input class="form-control" name="date" type="date" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>" required></div>
                                 <div class="col-12"><button name="add_diagnostic" class="btn btn-primary">Add Diagnostic</button></div>
                             </form>
@@ -2027,8 +2036,8 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                 <thead>
                                     <tr>
                                         <th>Problem</th>
-                                        <th>Diagnosis</th>
-                                        <th>Date Diagnosed</th>
+                                        <th>Body part / Region</th>
+                                        <th>Date diagnosed</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
@@ -2037,8 +2046,8 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                     $diagnostics = $medical_data['diagnostics'] ?? [];
                                     foreach ($diagnostics as $r): ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($r['problem']); ?></td>
-                                            <td><?php echo htmlspecialchars($r['diagnosis']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['study_type']); ?></td>
+                                            <td style="white-space: pre-wrap;"><?php echo htmlspecialchars($r['body_part_region']); ?></td>
                                             <td><?php echo htmlspecialchars($r['date_diagnosed']); ?></td>
                                             <td>
                                                 <a class="btn btn-sm btn-danger" href="?delete_diagnostic=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>&section=diagnostics" onclick="return confirm('Delete?')">
@@ -2077,15 +2086,78 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                         <?php endif; ?>
 
                         <!-- Treatment Plans Form -->
-                        <div class="card p-3 mb-3">
-                            <form method="post" class="row g-2">
+                        <div class="card p-3 mb-10">
+                            <form method="post" class="row g-3">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-                                <div class="col-md-4"><input class="form-control" name="plan" placeholder="Treatment Plan" value="<?php echo htmlspecialchars($_POST['plan'] ?? ''); ?>" required></div>
-                                <div class="col-md-4"><textarea class="form-control" name="notes" placeholder="Notes" rows="2"><?php echo htmlspecialchars($_POST['notes'] ?? ''); ?></textarea></div>
-                                <div class="col-md-4"><input class="form-control" name="date" type="date" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>"></div>
-                                <div class="col-12"><button name="add_treatment_plan" class="btn btn-primary">Add Treatment Plan</button></div>
+
+                                <!-- Plan Type -->
+                                <div class="col-md-4">
+                                    <select class="form-control" name="plan" id="route_select" required>
+                                        <option value="">Select Plan Type</option>
+                                        <option value="Physician Order" <?php if (($_POST['plan'] ?? '') == 'Physician Order') echo 'selected'; ?>>Physician Order</option>
+                                        <option value="Nursing Intervention" <?php if (($_POST['plan'] ?? '') == 'Nursing Intervention') echo 'selected'; ?>>Nursing Intervention</option>
+                                        <option value="Procedure" <?php if (($_POST['plan'] ?? '') == 'Procedure') echo 'selected'; ?>>Procedure</option>
+                                        <option value="Therapy" <?php if (($_POST['plan'] ?? '') == 'Therapy') echo 'selected'; ?>>Therapy</option>
+                                        <option value="Patient Education" <?php if (($_POST['plan'] ?? '') == 'Patient Education') echo 'selected'; ?>>Patient Education</option>
+                                        <option value="Referral" <?php if (($_POST['plan'] ?? '') == 'Referral') echo 'selected'; ?>>Referral</option>
+                                    </select>
+                                </div>
+
+                                <!-- Intervention -->
+                                <div class="col-md-4">
+                                    <textarea class="form-control" name="intervention" placeholder="Intervention Description" rows="1"><?php echo htmlspecialchars($_POST['intervention'] ?? ''); ?></textarea>
+                                </div>
+
+                                <!-- Related Problems -->
+                                <div class="col-md-4">
+                                    <textarea class="form-control" name="problems" placeholder="Related Problems:" rows="1"><?php echo htmlspecialchars($_POST['problems'] ?? ''); ?></textarea>
+                                </div>
+
+                                <!-- Frequency -->
+                                <div class="col-md-4">
+                                    <textarea class="form-control" name="frequency" placeholder="e.g., 2 weeks, Until discharge" rows="1"><?php echo htmlspecialchars($_POST['frequency'] ?? ''); ?></textarea>
+                                </div>
+
+                                <!-- Duration -->
+                                <div class="col-md-4">
+                                    <textarea class="form-control" name="duration" placeholder="e.g., Daily, BIR, PRN" rows="1"><?php echo htmlspecialchars($_POST['duration'] ?? ''); ?></textarea>
+                                </div>
+
+                                <!-- Ordered By -->
+                                <div class="col-md-4">
+                                    <textarea class="form-control" name="order_by" placeholder="Healthcare provider name" rows="1"><?php echo htmlspecialchars($_POST['order_by'] ?? ''); ?></textarea>
+                                </div>
+
+                                <!-- Assigned To -->
+                                <div class="col-md-4">
+                                    <textarea class="form-control" name="assigned_to" placeholder="Responsible Healthcare provider" rows="1"><?php echo htmlspecialchars($_POST['assigned_to'] ?? ''); ?></textarea>
+                                </div>
+
+                                <!-- Start Date -->
+                                <div class="col-md-4">
+                                    <label for="date_started" class="form-control">Start Date</label>
+                                    <input class="form-control" name="date_started" type="date" placeholder="Start Date" value="<?php echo htmlspecialchars($_POST['date_started'] ?? date('Y-m-d')); ?>">
+                                </div>
+
+                                <!-- End Date -->
+                                <div class="col-md-4">
+                                <label for="date_ended" class="form-control">End Date</label>
+                                    <input class="form-control" name="date_ended" type="date" placeholder="End Date" value="<?php echo htmlspecialchars($_POST['date_ended'] ?? date('Y-m-d')); ?>">
+                                </div>
+                                <div class="col-md-12">
+                                    <textarea class="form-control" name="special_instructions" placeholder="Special Instructions or Instructions..." rows="2"><?php echo htmlspecialchars($_POST['special_instructions'] ?? ''); ?></textarea>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <textarea class="form-control" name="patient_education_provided" placeholder="Education provided to patient and/or family..." rows="2"><?php echo htmlspecialchars($_POST['patient_education_provided'] ?? ''); ?></textarea>
+                                </div>
+                                <!-- Button -->
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button name="add_treatment_plan" class="btn btn-success w-100">Add Treatment Plan</button>
+                                </div>
                             </form>
                         </div>
+
 
                         <!-- Treatment Plans Table -->
                         <div class="card p-3">
@@ -2093,9 +2165,15 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                 <thead>
                                     <tr>
                                         <th>Plan</th>
-                                        <th>Notes</th>
-                                        <th>Date Planned</th>
+                                        <th>Intervention</th>
+                                        <th>Related Problems</th>
+                                        <th>Frequency</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Special Instructions</th>
+                                        <th>Patient Education Provided</th>
                                         <th>Action</th>
+                                        
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -2104,8 +2182,13 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                     foreach ($treatment_plans as $r): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($r['plan']); ?></td>
-                                            <td><?php echo htmlspecialchars($r['notes']); ?></td>
-                                            <td><?php echo htmlspecialchars($r['date_planned']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['intervention']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['problems']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['frequency']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['date_started']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['date_ended']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['special_instructions']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['patient_education_provided']); ?></td>
                                             <td class="action-btn">
                                                 <a class="btn btn-sm btn-danger btn-delete" href="?delete_treatment_plan=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>&section=treatment_plans" onclick="return confirm('Delete?')">
                                                     <i class="bi bi-trash"></i> Delete
@@ -2147,8 +2230,40 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                             <form method="post" class="row g-2">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                                 <div class="col-md-4"><input class="form-control" name="test_name" placeholder="Test Name" value="<?php echo htmlspecialchars($_POST['test_name'] ?? ''); ?>" required></div>
-                                <div class="col-md-4"><input class="form-control" name="result" placeholder="Result" value="<?php echo htmlspecialchars($_POST['result'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"> 
+                                    <select class="form-control" name="test_category" id="test_category" required>
+                                        <option value="">Select Test Category</option>
+                                        <option value="Hematology" <?php if (($_POST['test_category'] ?? '') == 'Hematologyr') echo 'selected'; ?>>Hematology</option>
+                                        <option value="Chemistry" <?php if (($_POST['test_category'] ?? '') == 'Chemistry') echo 'selected'; ?>>Chemistry</option>
+                                        <option value="Microbiology" <?php if (($_POST['test_category'] ?? '') == 'Microbiology') echo 'selected'; ?>>Microbiology</option>
+                                        <option value="Immunology" <?php if (($_POST['test_category'] ?? '') == 'Immunology') echo 'selected'; ?>>Immunology</option>
+                                        <option value="Pathology" <?php if (($_POST['test_category'] ?? '') == 'Pathology') echo 'selected'; ?>>Pathology</option>
+                                        <option value="Genetics" <?php if (($_POST['test_category'] ?? '') == 'Genetics') echo 'selected'; ?>>Genetics</option>
+                                        <option value="Endrinology" <?php if (($_POST['test_category'] ?? '') == 'Endrinology') echo 'selected'; ?>>Endrinology</option>
+                                        <option value="other" <?php if (($_POST['test_category'] ?? '') == 'other') echo 'selected'; ?>>other</option>
+                                    </select>
+                                    <input type="text" class="form-control mt-1" name="custom_category" id="custom_category" placeholder="Specify Category" style="display: none;" value="<?php echo htmlspecialchars($_POST['custom_category'] ?? ''); ?>">
+                                </div>
+                                <div class="col-md-4"><input class="form-control" name="test_code" placeholder="Test Code(e.g., CBC)" value="<?php echo htmlspecialchars($_POST['test_code'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"><input class="form-control" name="result" placeholder="Result(e.g., 7.2)" value="<?php echo htmlspecialchars($_POST['result'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"> 
+                                    <select class="form-control" name="result_status" id="result_status" required>
+                                        <option value="">Select Result Status</option>
+                                        <option value="Normal" <?php if (($_POST['result_status'] ?? '') == 'Hematologyr') echo 'selected'; ?>>Normal</option>
+                                        <option value="High" <?php if (($_POST['result_status'] ?? '') == 'Chemistry') echo 'selected'; ?>>High</option>
+                                        <option value="Low" <?php if (($_POST['result_status'] ?? '') == 'Microbiology') echo 'selected'; ?>>Low</option>
+                                        <option value="Critical High" <?php if (($_POST['result_status'] ?? '') == 'Immunology') echo 'selected'; ?>>Critical High</option>
+                                        <option value="Critical Low" <?php if (($_POST['result_status'] ?? '') == 'Pathology') echo 'selected'; ?>>Critical Low</option>
+                                        <option value="Abnormal" <?php if (($_POST['result_status'] ?? '') == 'Pathology') echo 'selected'; ?>>Abnormal</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4"><input class="form-control" name="units" placeholder="Units (e.g., mg/dL)" value="<?php echo htmlspecialchars($_POST['units'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"><input class="form-control" name="reference_range" placeholder="Reference range(e.g., 3.5-5.0)" value="<?php echo htmlspecialchars($_POST['reference_range'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"><input class="form-control" name="order_by" placeholder="Order by(Dr. name, MD)" value="<?php echo htmlspecialchars($_POST['order_by'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"><input class="form-control" name="collected_by" placeholder="Phlebotomist name" value="<?php echo htmlspecialchars($_POST['collected_by'] ?? ''); ?>" required></div>
+                                <div class="col-md-4"><input class="form-control" name="laboratory_facility" placeholder="Lab facility name" value="<?php echo htmlspecialchars($_POST['laboratory_facility'] ?? ''); ?>" required></div>
                                 <div class="col-md-4"><input type="date" class="form-control" name="date" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>"></div>
+                                <div class="col-md-8"><textarea class="form-control" name="clinical_interpretation" placeholder="Clinical significance and interpretation" rows="3"><?php echo htmlspecialchars($_POST['clinical_interpretation'] ?? ''); ?></textarea></div>
                                 <div class="col-12"><button name="add_lab" class="btn btn-primary">Add Lab Result</button></div>
                             </form>
                         </div>
@@ -2159,6 +2274,8 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                 <thead>
                                     <tr>
                                         <th>Test Name</th>
+                                        <th>Test Category</th>
+                                        <th>Test Code</th>
                                         <th>Result</th>
                                         <th>Date Taken</th>
                                         <th>Action</th>
@@ -2170,6 +2287,8 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                     foreach ($labs as $r): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($r['test_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['test_category']); ?></td>
+                                            <td><?php echo htmlspecialchars($r['test_code']); ?></td>
                                             <td><?php echo htmlspecialchars($r['test_result']); ?></td>
                                             <td><?php echo htmlspecialchars(substr($r['date_taken'], 0, 10)); ?></td>
                                             <td>
@@ -2233,6 +2352,7 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                 <thead>
                                     <tr>
                                         <th>Condition Name</th>
+                                        <th>Status</th>
                                         <th>Notes</th>
                                         <th>Date Recorded</th>
                                         <th>Action</th>
@@ -2244,6 +2364,14 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                     foreach ($history as $r): ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($r['condition_name']); ?></td>
+                                            <td>
+                                                <span class="badge <?php
+                                                    if ($r['status'] == 'Active') echo 'bg-success';
+                                                    elseif ($r['status'] == 'Resolved') echo 'bg-secondary';
+                                                    elseif ($r['status'] == 'Chronic') echo 'bg-warning';
+                                                    else echo 'bg-primary';
+                                                ?>"><?php echo htmlspecialchars($r['status']); ?></span>
+                                            </td>
                                             <td><?php echo htmlspecialchars($r['notes']); ?></td>
                                             <td><?php echo htmlspecialchars($r['date_recorded']); ?></td>
                                             <td>
@@ -2251,84 +2379,6 @@ if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_as
                                                     <i class="bi bi-trash"></i> Delete
                                                 </a>
                                                 <a class="btn btn-sm btn-warning" href="javascript:void(0)" onclick="editMedicalHistory(<?php echo $r['id']; ?>)">
-                                                    <i class="bi bi-pencil"></i> Edit
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <button class="btn btn-secondary mt-3" onclick="showSection('default')">Back to Dashboard</button>
-                    </div>
-
-                    <!-- Lab Diagnostic Results Section (Hidden by default) -->
-                    <div id="lab_diagnostic_results-content" style="display: none;">
-                        <h4>Lab Diagnostic Results</h4>
-
-                        <!-- Feedback messages for lab diagnostic results -->
-                        <?php if (!empty($msg)): ?>
-                            <div class="alert alert-success alert-dismissible fade show">
-                                <?php echo htmlspecialchars($msg); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-
-                        <!-- Lab Diagnostic Results Form -->
-                        <div class="card p-3 mb-3">
-                            <form method="post" class="row g-2">
-                                <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-                                <div class="col-md-3"><input class="form-control" name="test_type" placeholder="Test Type (e.g., Blood, Urine)" value="<?php echo htmlspecialchars($_POST['test_type'] ?? ''); ?>" required></div>
-                                <div class="col-md-3"><input class="form-control" name="test_name" placeholder="Test Name" value="<?php echo htmlspecialchars($_POST['test_name'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input class="form-control" name="result" placeholder="Result" value="<?php echo htmlspecialchars($_POST['result'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input class="form-control" name="normal_range" placeholder="Normal Range" value="<?php echo htmlspecialchars($_POST['normal_range'] ?? ''); ?>" required></div>
-                                <div class="col-md-2"><input type="date" class="form-control" name="date_ordered" value="<?php echo htmlspecialchars($_POST['date_ordered'] ?? date('Y-m-d')); ?>" required></div>
-                                <div class="col-md-2"><input type="date" class="form-control" name="date_completed" value="<?php echo htmlspecialchars($_POST['date_completed'] ?? ''); ?>"></div>
-                                <div class="col-md-10"><textarea class="form-control" name="notes" placeholder="Notes" rows="2"><?php echo htmlspecialchars($_POST['notes'] ?? ''); ?>"></textarea></div>
-                                <div class="col-12"><button name="add_lab_diag" class="btn btn-primary">Add Lab Diagnostic Result</button></div>
-                            </form>
-                        </div>
-
-                        <!-- Lab Diagnostic Results Table -->
-                        <div class="card p-3">
-                            <table class="table table-sm table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Test Type</th>
-                                        <th>Test Name</th>
-                                        <th>Result</th>
-                                        <th>Normal Range</th>
-                                        <th>Date Ordered</th>
-                                        <th>Date Completed</th>
-                                        <th>Notes</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    $lab_diags = $medical_data['lab_diagnostic_results'] ?? [];
-                                    foreach ($lab_diags as $r): ?>
-                                        <tr>
-                                            <td><?php echo htmlspecialchars($r['test_type'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars($r['test_name'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars($r['result'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars($r['normal_range'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($r['date_ordered'] ?? ''))); ?></td>
-                                            <td><?php echo htmlspecialchars($r['date_completed'] ? date('Y-m-d', strtotime($r['date_completed'])) : 'Pending'); ?></td>
-                                            <td><?php echo htmlspecialchars($r['notes'] ?? 'N/A'); ?></td>
-                                            <td>
-                                                <a class="btn btn-sm btn-danger" href="?delete_lab_diag=<?php echo $r['id']; ?>&patient_id=<?php echo $patient_id; ?>&section=lab_diagnostic_results" onclick="return confirm('Delete?')">
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </a>
-                                                <a class="btn btn-sm btn-warning" href="javascript:void(0)" onclick="editLabDiag(<?php echo $r['id']; ?>)">
                                                     <i class="bi bi-pencil"></i> Edit
                                                 </a>
                                             </td>
@@ -2529,15 +2579,19 @@ function editMed(id) {
 }
 
 function editVital(id) {
-    fetch('?get_vital=' + id)
+    fetch('&get_vital=' + id)
         .then(response => response.json())
         .then(data => {
             document.getElementById('vital_id').value = data.id;
             document.getElementById('bp_edit').value = data.bp;
+            document.getElementById('respiratory_rate_edit').value = data.respiratory_rate
             document.getElementById('hr_edit').value = data.hr;
             document.getElementById('temp_edit').value = data.temp;
             document.getElementById('height_edit').value = data.height;
             document.getElementById('weight_edit').value = data.weight;
+            document.getElementById('oxygen_saturation_edit').value = data.oxygen_saturation;
+            document.getElementById('pain_scale_edit').value = data.pain_scale;
+            document.getElementById('ga_edit').value = date.general_appearance;
             document.getElementById('date_edit').value = data.date_taken.substring(0, 10);
             new bootstrap.Modal(document.getElementById('editVitalModal')).show();
         })
@@ -2623,6 +2677,6 @@ let section = urlParams.get('section') || 'default';
 if ('<?php echo $submitted_section; ?>' !== '') {
     section = '<?php echo $submitted_section; ?>';
 }
-showSection(section);
+showSection(section);   
 </script>
 <?php include "footer.php"; ?>  

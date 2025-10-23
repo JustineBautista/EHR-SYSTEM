@@ -1,3 +1,8 @@
+
+<?php
+echo '<link rel="icon" href="IMAGES/aurora.png" type="image/png">';
+?>
+
 <?php
 // Check if session is not already started before starting it
 if (session_status() === PHP_SESSION_NONE) {
@@ -15,7 +20,9 @@ require_once 'db.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="IMAGES/aurora.png" type="image/png">
     <title>EHR System</title>
+    <link rel="icon" href="IMAGES/aurora.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
     <style>
@@ -309,6 +316,15 @@ require_once 'db.php';
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="patients.php"><i class="bi bi-people-fill me-1"></i>Patients</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="medical_summary.php"><i class="bi bi-clipboard-data me-1"></i>Medical Summary</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="aboutus.php"><i class="bi bi-info-circle me-1"></i>About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="services.php"><i class="bi bi-capsule me-1"></i> Services
                     </li>
                 </ul>
                 <ul class="navbar-nav">

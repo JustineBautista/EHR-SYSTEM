@@ -1,4 +1,6 @@
 <?php
+// Set session cookie to persist for 30 days (86400 seconds * 30)
+session_set_cookie_params(900);
 session_start();
 include "db.php";
 

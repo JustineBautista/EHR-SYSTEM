@@ -127,7 +127,7 @@ include "header.php";
     }
 
     body {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background: linear-gradient(135deg, #f5f7fa 0%,rgb(222, 221, 221) 100%);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       padding-top: 5rem;
       color: var(--text-dark);
@@ -152,6 +152,40 @@ include "header.php";
       background-clip: text;
       margin: 0;
       letter-spacing: -0.025em;
+    }
+
+    .welcome-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+
+    .welcome-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .welcome-text {
+      color: var(--text-light);
+      font-size: 1rem;
+      margin: 0.5rem 0 0 0;
+      font-weight: 500;
     }
 
     .card {
@@ -196,6 +230,8 @@ include "header.php";
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
       border: 1px solid rgba(255, 255, 255, 0.2);
       height: 100%;
+      border: 0.10px solid rgb(178, 178, 178);
+      border-radius:1rem;
       position: relative;
       overflow: hidden;
     }
@@ -487,9 +523,72 @@ include "header.php";
     .card:nth-child(3) { animation-delay: 0.3s; }
     .card:nth-child(4) { animation-delay: 0.4s; }
 
+    .stat-trend {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-link {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover .stat-link {
+      opacity: 1;
+      transform: translateX(2px);
+    }
+
+    .stat-card-patients .stat-icon {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      color: #2563eb;
+    }
+
+    .stat-card-vitals .stat-icon {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #dc2626;
+    }
+
+    .stat-card-medications .stat-icon {
+      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+      color: #4f46e5;
+    }
+
+    .stat-card-lab .stat-icon {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #d97706;
+    }
+
+    /* Counter animation */
+    @keyframes countUp {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .stat-value {
+      animation: countUp 0.8s ease-out forwards;
+    }
+
 </style>
 
 <!-- Feedback message -->
+<link rel="icon" href="IMAGES/aurora.png" type="image/png">
 <?php if (!empty($msg)): ?>
   <div class="container mt-3">
     <div class="alert <?php echo strpos($msg, '✅') !== false ? 'alert-success' : (strpos($msg, '⚠️') !== false ? 'alert-warning' : 'alert-danger'); ?> alert-dismissible fade show">
@@ -499,65 +598,59 @@ include "header.php";
   </div>
 <?php endif; ?>
 
-<div class="container-fluid px-4 py-4">
+<div class="container-fluid px-4 py-4 br">
   <!-- Dashboard Header -->
   <div class="row mb-4">
     <div class="col-12">
-      <h1 class="dashboard-title">Dashboard Overview</h1>
+      <div class="welcome-card">
+        <h1 class="dashboard-title">Dashboard Overview</h1>
+        <p class="welcome-text">Welcome back, <?php echo htmlspecialchars($_SESSION['admin'] ?? 'Admin'); ?>! Here's your system overview.</p>
+      </div>
     </div>
   </div>
 
   <!-- Stats Grid -->
   <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
-      <a href="patients.php" class="text-decoration-none">
-      <div class="stat-card">
+      <div class="stat-card stat-card-patients">
         <div class="stat-icon">
           <i class="bi bi-people-fill fs-3"></i>
         </div>
-        <div class="stat-value"><?php echo number_format($stats['patients']); ?></div>
+        <div class="stat-value" data-target="<?php echo $stats['patients']; ?>">0</div>
         <div class="stat-label">Total Patients</div>
-        </a>
       </div>
     </div>
 
     <div class="col-xl-3 col-md-6">
-      <a href="vitals.php" class="text-decoration-none">
-      <div class="stat-card">
+      <div class="stat-card stat-card-vitals">
         <div class="stat-icon">
           <i class="bi bi-heart-pulse fs-3"></i>
         </div>
-        <div class="stat-value"><?php echo number_format($stats['vitals']); ?></div>
+        <div class="stat-value" data-target="<?php echo $stats['vitals']; ?>">0</div>
         <div class="stat-label">Vital Records</div>
-        </a>
       </div>
     </div>
 
     <div class="col-xl-3 col-md-6">
-      <a href="medications.php" class="text-decoration-none">
-      <div class="stat-card">
+      <div class="stat-card stat-card-medications">
         <div class="stat-icon">
           <i class="bi bi-capsule fs-3"></i>
         </div>
-        <div class="stat-value"><?php echo number_format($stats['medications']); ?></div>
+        <div class="stat-value" data-target="<?php echo $stats['medications']; ?>">0</div>
         <div class="stat-label">Medications</div>
-        </a>
       </div>
     </div>
 
     <div class="col-xl-3 col-md-6">
-      <a href="lab_diagnostic_results.php" class="text-decoration-none">
-      <div class="stat-card">
+      <div class="stat-card stat-card-lab">
         <div class="stat-icon">
           <i class="bi bi-clipboard-data fs-3"></i>
         </div>
-        <div class="stat-value"><?php echo number_format($stats['lab_results']); ?></div>
+        <div class="stat-value" data-target="<?php echo $stats['lab_results']; ?>">0</div>
         <div class="stat-label">Lab Results</div>
-        </a>
       </div>
     </div>
   </div>
-
   <!-- Quick Actions Section -->
   <div class="row mb-4">
     <div class="col-12">
@@ -705,6 +798,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Counter animation
+    function animateCounter(element, target) {
+        let current = 0;
+        const increment = target / 100;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                element.textContent = Math.floor(target);
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.floor(current);
+            }
+        }, 20);
+    }
+
+    // Animate all stat counters
+    document.querySelectorAll('.stat-value').forEach(counter => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        animateCounter(counter, target);
+    });
 
     // Medical Summary Charts
     const stats = <?php echo json_encode($stats); ?>;
