@@ -459,20 +459,17 @@ if (isset($_POST['add_vitals'])) {
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate blood pressure format (systolic/diastolic)
-    if (!preg_match('/^\d+\/\d+$/', $bp)) {
+    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Blood pressure must be in format 'systolic/diastolic' (e.g., 120/80)";
     }
-    elseif (!empty($date) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-        $error = "Invalid date format";
-    }
     elseif (empty($oxygen_saturation)){
-        $error = "Oxygen Saturation is required";
+        $msg = "Oxygen Saturation is requird";
     }
     elseif (empty($pain_scale)){
-        $error = "Pain Scale is required";
+        $msg = "Pain Scale is requird";
     }
     elseif (empty($general_appearance)){
-        $error = "General appearance is required";
+        $msg = "General appearance is requird";
     }
     else {
         $stmt = $conn->prepare("INSERT INTO vitals (patient_id, recorded_by, bp, respiratory_rate, hr, temp, height, weight, oxygen_saturation, pain_scale, general_appearance, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
@@ -534,21 +531,9 @@ if (isset($_POST['update_vitals'])) {
     $general_appearance = $_POST['general_appearance'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d");
 
-    // Validate
-    if (!preg_match('/^\d+\/\d+$/', $bp)) {
+    // Validate (same as add)
+    if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
         $error = "Blood pressure must be in format 'systolic/diastolic' (e.g., 120/80)";
-    }
-    elseif (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-        $error = "Invalid date format";
-    }
-    elseif (empty($oxygen_saturation)){
-        $error = "Oxygen Saturation is required";
-    }
-    elseif (empty($pain_scale)){
-        $error = "Pain Scale is required";
-    }
-    elseif (empty($general_appearance)){
-        $error = "General appearance is required";
     }
     else {
         $stmt = $conn->prepare("UPDATE vitals SET recorded_by=?, bp=?, respiratory_rate=?, hr=?, temp=?, height=?, weight=?, oxygen_saturation=?, pain_scale=?, general_appearance=?, date_taken=? WHERE id=? AND patient_id=?");
@@ -571,6 +556,9 @@ if (isset($_POST['update_vitals'])) {
         $stmt->close();
     }
 }
+
+
+
 
 // Medications processing (adapted from medications.php)
 if (isset($_POST['add_med'])) {
@@ -891,12 +879,11 @@ if (isset($_GET['delete_diagnostic'])) {
 
 // Handle update diagnostics
 if (isset($_POST['update_diagnostic'])) {
-    $did = intval($_POST['diagnostic_id']);
     $study_type = sanitize_input($conn, $_POST['study_type'] ?? "");
     $body_part_region = sanitize_input($conn, $_POST['body_part_region'] ?? "");
     $study_description = sanitize_input($conn, $_POST['study_description'] ?? "");
     $clinical_indication = sanitize_input($conn, $_POST['clinical_indication'] ?? "");
-    $image_quality = sanitize_input($conn, $_POST['image_quality'] ?? "");
+    $image_quality = sanitize_input($conn, $_POST['image_quality'] ?? ""); 
     $date = $_POST['date'] ?: date("Y-m-d");
 
     // Validate date format if provided
@@ -1003,9 +990,8 @@ if (isset($_GET['delete_treatment_plan'])) {
 if (isset($_POST['update_treatment_plan'])) {
     $tid = intval($_POST['treatment_plan_id']);
     $plan = sanitize_input($conn, $_POST['plan'] ?? "");
-$intervention = sanitize_input($conn, $_POST['intervention'] ?? "");
-$problems = sanitize_input($conn, $_POST['problems'] ?? "");
-$frequency = sanitize_input($conn, $_POST['frequency'] ?? "");
+    $intervention = sanitize_input($conn, $_POST['intervention'] ?? "");
+    $frequency = sanitize_input($conn, $_POST['frequency'] ?? "");
     $duration = sanitize_input($conn, $_POST['duration'] ?? "");
     $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
     $assigned_to = sanitize_input($conn, $_POST['assigned_to'] ?? "");
@@ -1020,7 +1006,7 @@ $frequency = sanitize_input($conn, $_POST['frequency'] ?? "");
         (!empty($date_ended) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_ended))) {
         $error = "Date must be in format YYYY-MM-DD.";
     } else {
-        $stmt = $conn->prepare("UPDATE treatment_plans SET plan=?, intervention=?, problems=?, frequency=?, duration=?, order_by=?, assigned_to=?, date_started=?, date_ended=?, special_instructions=?, patient_education_provided=? WHERE id=? AND patient_id=?");
+        $stmt = $conn->prepare("UPDATE treatment_plans SET plan=?, intervention=?, problems=?, frequency=?, duration=?, order_by=?, assigned_to=?, date_started=?, date_ended=?, special_instructions=?, patient_education_provided=?, WHERE id=? AND patient_id=?");
         $stmt->bind_param("sssssssssssii", $plan, $intervention, $problems,$frequency, $duration, $order_by, $assigned_to, $date_started, $date_ended, $special_instructions, $patient_education_provided, $tid, $patient_id);
         if ($stmt->execute()) {
             $msg = "Treatment plan updated.";
@@ -1065,7 +1051,7 @@ if (isset($_POST['add_lab'])) {
     $reference_range = sanitize_input($conn, $_POST['reference_range'] ?? "");
     $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
     $collected_by = sanitize_input($conn, $_POST['collected_by'] ?? "");
-    $laboratory_facility = sanitize_input($conn, $_POST['laboratory_facility'] ?? "");
+    $labarotary_facility = sanitize_input($conn, $_POST['labarotary_facility'] ?? "");
     $clinical_interpretation = $_POST['clinical_interpretation'] ?? "";
     $date = $_POST['date'] ?: date("Y-m-d H:i:s");
 
@@ -1073,8 +1059,8 @@ if (isset($_POST['add_lab'])) {
     if (!empty($_POST['date']) && !preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $date)) {
     }
     else {
-        $stmt = $conn->prepare("INSERT INTO lab_results (patient_id, test_name, test_result, test_category, test_code, result_status, units, reference_range, order_by, collected_by, laboratory_facility, clinical_interpretation, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("issssssssssss", $patient_id, $test, $result, $test_category, $test_code, $result_status, $units, $reference_range, $order_by, $collected_by, $laboratory_facility, $clinical_interpretation, $date);
+        $stmt = $conn->prepare("INSERT INTO lab_results (patient_id, test_name, test_result, test_category, test_code, result_status, units, reference_range, order_by, collected_by, labarotary_facility, clinical_interpretation, date_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("issssssssssss", $patient_id, $test, $result, $test_category, $test_code, $result_status, $units, $reference_range, $order_by, $collected_by, $labarotary_facility, $clinical_interpretation, $date);
         if ($stmt->execute()) {
             $msg = "Lab result added.";
             // Refresh medical_data for lab_results
@@ -1115,15 +1101,15 @@ if (isset($_GET['delete_lab'])) {
 if (isset($_POST['update_lab'])) {
     $lid = intval($_POST['lab_id']);
     $test = sanitize_input($conn, $_POST['test_name'] ?? "");
-$result = sanitize_input($conn, $_POST['result'] ?? "");
-$test_category = sanitize_input($conn, $_POST['test_category'] ?? "");
-$test_code = sanitize_input($conn, $_POST['test_code'] ?? "");
+    $result = sanitize_input($conn, $_POST['result'] ?? "");
+    $test_result = sanitize_input($conn, $_POST['test_category'] ?? "");
+    $test_code = sanitize_input($conn, $_POST['test_code'] ?? "");
     $result_status = sanitize_input($conn, $_POST['result_status'] ?? "");
     $units = sanitize_input($conn, $_POST['units'] ?? "");
     $reference_range = sanitize_input($conn, $_POST['reference_range'] ?? "");
     $order_by = sanitize_input($conn, $_POST['order_by'] ?? "");
     $collected_by = sanitize_input($conn, $_POST['collected_by'] ?? "");
-$laboratory_facility = sanitize_input($conn, $_POST['laboratory_facility'] ?? "");
+    $labarotary_facility = sanitize_input($conn, $_POST['labarotary_facility'] ?? "");
     $date = $_POST['date'] ?: date("Y-m-d H:i:s");
 
     // Validate date format if provided
@@ -1132,7 +1118,7 @@ $laboratory_facility = sanitize_input($conn, $_POST['laboratory_facility'] ?? ""
     }
     else {
         $stmt = $conn->prepare("UPDATE lab_results SET test_name=?, test_category=?, test_code=?, test_result=?, result_status=?, units=?, reference_range=?, order_by=?, collected_by=?, laboratory_facility=?, date_taken=? WHERE id=? AND patient_id=?");
-        $stmt->bind_param("sssssssssssii", $test, $test_category, $test_code, $result, $result_status, $units, $reference_range, $order_by, $collected_by, $laboratory_facility, $date, $lid, $patient_id);
+        $stmt->bind_param("sssssssssssii", $test, $test_category, $test_code, $result, $result_status, $units, $reference_range, $order_by, $collected_by, $labarotary_facility, $date, $lid, $patient_id);
         if ($stmt->execute()) {
             $msg = "Lab result updated.";
         } else {
@@ -1374,9 +1360,6 @@ if (isset($_POST['add_surgery']) || isset($_POST['update_surgery'])) $submitted_
 if (isset($_POST['add_allergy']) || isset($_POST['update_allergy'])) $submitted_section = 'allergies';
 if (isset($_POST['add_family_history']) || isset($_POST['update_family_history'])) $submitted_section = 'family_history';
 if (isset($_POST['add_lifestyle']) || isset($_POST['update_lifestyle'])) $submitted_section = 'lifestyle_info';
-if (isset($_POST['add_physical_assessment']) || isset($_POST['update_physical_assessment'])) $submitted_section = 'physical_assessment';
-if (isset($_POST['add_lab']) || isset($_POST['update_lab'])) $submitted_section = 'lab_results';
-if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history'])) $submitted_section = 'medical_history';
 ?>
 
 <style>
@@ -1675,21 +1658,7 @@ if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history
             <div class="card mb-4 content">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Patient Dashboard - <?php echo htmlspecialchars($patient['fullname']); ?></h5>
-                    <!-- Search Form -->
-                    <form method="get" class="d-flex align-items-center" style="max-width: 400px;">
-                        <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-                        <input type="text" name="search" class="form-control me-2" placeholder="Search medical records..." value="<?php echo htmlspecialchars($search); ?>">
-                        <button type="submit" class="btn btn-outline-primary me-2">Search</button>
-                        <?php if (!empty($search)): ?>
-                            <a href="?patient_id=<?php echo $patient_id; ?>" class="btn btn-outline-secondary">Clear</a>
-                        <?php endif; ?>
-                    </form>
                 </div>
-                <?php if (!empty($search)): ?>
-                    <div class="alert alert-info mt-2">
-                        <strong>Search Results for:</strong> "<?php echo htmlspecialchars($search); ?>"
-                    </div>
-                <?php endif; ?>
                 <div class="card-body">
                     
                     <!-- Feedback Messages -->
@@ -2081,7 +2050,7 @@ if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history
                         </div>
                         <button class="btn btn-secondary mt-3" onclick="showSection('default')">Back to Dashboard</button>
                     </div>
-                 <!-- Vitals Section (Hidden by default) -->
+                   <!-- Vitals Section (Hidden by default) -->
                     <div id="vitals-content" style="display: none;">
                         <h4>Vital Signs</h4>
 
@@ -2426,9 +2395,9 @@ if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history
                                     <div class="col-md-4"><input class="form-control" name="performed_by" placeholder="Performed by(Technologist name)" value="<?php echo htmlspecialchars($_POST['performed_by'] ?? ''); ?>" required></div>
                                     <div class="col-md-4"><input class="form-control" name="Interpreted_by" placeholder="Interpreted by(Dr.Name, MD)" value="<?php echo htmlspecialchars($_POST['Interpreted_by'] ?? ''); ?>" required></div>
                                     <div class="col-md-4"><input class="form-control" name="Imaging_facility" placeholder="Imaging Facility(Facility name)" value="<?php echo htmlspecialchars($_POST['Imaging_facility'] ?? ''); ?>" required></div>
-<textarea class="form-control" name="radiology_findings" placeholder="Radiological Findings(Detailed findings from the study)" rows="4" required><?php echo htmlspecialchars($_POST['radiology_findings'] ?? ''); ?></textarea>
-<textarea class="form-control" name="impression_conclusion" placeholder="Impression / Conclusion(Radiologist's impression and conclusion)" rows="4" required><?php echo htmlspecialchars($_POST['impression_conclusion'] ?? ''); ?></textarea>
-<textarea class="form-control" name="recommendations" placeholder="Recommendations( Follow-up recommendations)" rows="4" required><?php echo htmlspecialchars($_POST['recommendations'] ?? ''); ?></textarea>
+                                    <div class="col-md-12"><textarea class="form-control" name="radiology_findings" placeholder="Radiological Findings(Detailed findings from the study)" rows="4" value="<?php echo htmlspecialchars($_POST['radiology_findings'] ?? ''); ?>" required></textarea></div>
+                                    <div class="col-md-12"><textarea class="form-control" name="impression_conclusion" placeholder="Impression / Conclusion(Radiologist's impression and conclusion)" rows="4" value="<?php echo htmlspecialchars($_POST['impression_conclusion'] ?? ''); ?>" required></textarea></div>
+                                    <div class="col-md-12"><textarea class="form-control" name="recommendations" placeholder="Recommendations( Follow-up recommendations)" rows="4" value="<?php echo htmlspecialchars($_POST['recommendations'] ?? ''); ?>" required></textarea></div>
                                 <div class="col-md-4"><input class="form-control" name="date" type="date" value="<?php echo htmlspecialchars($_POST['date'] ?? date('Y-m-d')); ?>" required></div>
                                 <div class="col-12"><button name="add_diagnostic" class="btn btn-primary">Add Diagnostic</button></div>
                             </form>
@@ -2507,20 +2476,15 @@ if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history
                                     </select>
                                 </div>
 
-                                <!-- Related Problems -->
-                                <div class="col-md-4">
-                                    <label class="form-label">Related Problems</label>
-                                    <textarea class="form-control" name="problems" placeholder="Related Problems" rows="1"><?php echo htmlspecialchars($_POST['problems'] ?? ''); ?></textarea>
-                                </div>
-
                                 <!-- Intervention -->
                                 <div class="col-md-4">
-                                    <label class="form-label">Intervention</label>
                                     <textarea class="form-control" name="intervention" placeholder="Intervention Description" rows="1"><?php echo htmlspecialchars($_POST['intervention'] ?? ''); ?></textarea>
                                 </div>
 
                                 <!-- Related Problems -->
                                 <div class="col-md-4">
+                                    <textarea class="form-control" name="problems" placeholder="Related Problems:" rows="1"><?php echo htmlspecialchars($_POST['problems'] ?? ''); ?></textarea>
+                                </div>
 
                                 <!-- Frequency -->
                                 <div class="col-md-4">
@@ -2639,31 +2603,31 @@ if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history
                             <form method="post" class="row g-2">
                                 <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
                                 <div class="col-md-4"><input class="form-control" name="test_name" placeholder="Test Name" value="<?php echo htmlspecialchars($_POST['test_name'] ?? ''); ?>" required></div>
-                                <div class="col-md-4">
+                                <div class="col-md-4"> 
                                     <select class="form-control" name="test_category" id="test_category" required>
                                         <option value="">Select Test Category</option>
-                                        <option value="Hematology" <?php if (($_POST['test_category'] ?? '') == 'Hematology') echo 'selected'; ?>>Hematology</option>
+                                        <option value="Hematology" <?php if (($_POST['test_category'] ?? '') == 'Hematologyr') echo 'selected'; ?>>Hematology</option>
                                         <option value="Chemistry" <?php if (($_POST['test_category'] ?? '') == 'Chemistry') echo 'selected'; ?>>Chemistry</option>
                                         <option value="Microbiology" <?php if (($_POST['test_category'] ?? '') == 'Microbiology') echo 'selected'; ?>>Microbiology</option>
                                         <option value="Immunology" <?php if (($_POST['test_category'] ?? '') == 'Immunology') echo 'selected'; ?>>Immunology</option>
                                         <option value="Pathology" <?php if (($_POST['test_category'] ?? '') == 'Pathology') echo 'selected'; ?>>Pathology</option>
                                         <option value="Genetics" <?php if (($_POST['test_category'] ?? '') == 'Genetics') echo 'selected'; ?>>Genetics</option>
-                                        <option value="Endocrinology" <?php if (($_POST['test_category'] ?? '') == 'Endocrinology') echo 'selected'; ?>>Endocrinology</option>
-                                        <option value="other" <?php if (($_POST['test_category'] ?? '') == 'other') echo 'selected'; ?>>Other</option>
+                                        <option value="Endrinology" <?php if (($_POST['test_category'] ?? '') == 'Endrinology') echo 'selected'; ?>>Endrinology</option>
+                                        <option value="other" <?php if (($_POST['test_category'] ?? '') == 'other') echo 'selected'; ?>>other</option>
                                     </select>
                                     <input type="text" class="form-control mt-1" name="custom_category" id="custom_category" placeholder="Specify Category" style="display: none;" value="<?php echo htmlspecialchars($_POST['custom_category'] ?? ''); ?>">
                                 </div>
                                 <div class="col-md-4"><input class="form-control" name="test_code" placeholder="Test Code(e.g., CBC)" value="<?php echo htmlspecialchars($_POST['test_code'] ?? ''); ?>" required></div>
                                 <div class="col-md-4"><input class="form-control" name="result" placeholder="Result(e.g., 7.2)" value="<?php echo htmlspecialchars($_POST['result'] ?? ''); ?>" required></div>
-                                <div class="col-md-4">
+                                <div class="col-md-4"> 
                                     <select class="form-control" name="result_status" id="result_status" required>
                                         <option value="">Select Result Status</option>
-                                        <option value="Normal" <?php if (($_POST['result_status'] ?? '') == 'Normal') echo 'selected'; ?>>Normal</option>
-                                        <option value="High" <?php if (($_POST['result_status'] ?? '') == 'High') echo 'selected'; ?>>High</option>
-                                        <option value="Low" <?php if (($_POST['result_status'] ?? '') == 'Low') echo 'selected'; ?>>Low</option>
-                                        <option value="Critical High" <?php if (($_POST['result_status'] ?? '') == 'Critical High') echo 'selected'; ?>>Critical High</option>
-                                        <option value="Critical Low" <?php if (($_POST['result_status'] ?? '') == 'Critical Low') echo 'selected'; ?>>Critical Low</option>
-                                        <option value="Abnormal" <?php if (($_POST['result_status'] ?? '') == 'Abnormal') echo 'selected'; ?>>Abnormal</option>
+                                        <option value="Normal" <?php if (($_POST['result_status'] ?? '') == 'Hematologyr') echo 'selected'; ?>>Normal</option>
+                                        <option value="High" <?php if (($_POST['result_status'] ?? '') == 'Chemistry') echo 'selected'; ?>>High</option>
+                                        <option value="Low" <?php if (($_POST['result_status'] ?? '') == 'Microbiology') echo 'selected'; ?>>Low</option>
+                                        <option value="Critical High" <?php if (($_POST['result_status'] ?? '') == 'Immunology') echo 'selected'; ?>>Critical High</option>
+                                        <option value="Critical Low" <?php if (($_POST['result_status'] ?? '') == 'Pathology') echo 'selected'; ?>>Critical Low</option>
+                                        <option value="Abnormal" <?php if (($_POST['result_status'] ?? '') == 'Pathology') echo 'selected'; ?>>Abnormal</option>
                                     </select>
                                 </div>
                                 <div class="col-md-4"><input class="form-control" name="units" placeholder="Units (e.g., mg/dL)" value="<?php echo htmlspecialchars($_POST['units'] ?? ''); ?>" required></div>
@@ -2875,7 +2839,7 @@ if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history
                         </div>
 
                         <button class="btn btn-secondary mt-3" onclick="showSection('default')">Back to Dashboard</button>
-                    
+                    </div>
                 </div>
             </div>
         </div>
@@ -3004,4 +2968,4 @@ if (isset($_POST['add_medical_history']) || isset($_POST['update_medical_history
     });
 </script>
 
-<?php include "footer.php"; ?>
+<?php include "footer.php"; ?> 
