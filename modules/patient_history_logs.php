@@ -1,5 +1,5 @@
 <?php
-echo '<link rel="icon" href="IMAGES/aurora.png" type="image/png">';
+echo '<link rel="icon" href="../assets/IMAGES/aurora.png" type="image/png">';
 ?>
 
 <?php
@@ -9,10 +9,10 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['admin'])) {
-    header("Location: index.php");
+    header("Location: ../pages/index.php");
     exit();
 }
-require_once 'db.php';
+require_once '../includes/db.php';
 
 // Get filter parameters
 $patient_id = $_GET['patient_id'] ?? '';
@@ -350,7 +350,7 @@ $query .= " ORDER BY action_date DESC";
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="dashboard.php">
-                <img src="IMAGES/aurora.png" width="auto" height="70px" class="d-inline-block align-text-top me-2" alt="EHR Logo">
+                <img src="../assets/IMAGES/aurora.png" width="auto" height="70px" class="d-inline-block align-text-top me-2" alt="EHR Logo">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -358,13 +358,13 @@ $query .= " ORDER BY action_date DESC";
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+                        <a class="nav-link" href="../pages/dashboard.php"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="patients.php"><i class="bi bi-people-fill me-1"></i>Patients</a>
+                        <a class="nav-link" href="../modules/patients.php"><i class="bi bi-people-fill me-1"></i>Patients</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="patient_history_logs.php"><i class="bi bi-clock-history me-1"></i>Patient History Logs</a>
+                        <a class="nav-link active" href="../modules/patient_history_logs.php"><i class="bi bi-clock-history me-1"></i>Patient History Logs</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
@@ -373,7 +373,7 @@ $query .= " ORDER BY action_date DESC";
                             <i class="bi bi-person-circle me-1"></i>Admin
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
+                            <li><a class="dropdown-item" href="../pages/logout.php"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -415,7 +415,7 @@ $query .= " ORDER BY action_date DESC";
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
                                     <button type="submit" class="btn btn-primary me-2">Filter</button>
-                                    <a href="patient_history_logs.php" class="btn btn-secondary">Clear</a>
+                                    <a href="../modules/patient_history_logs.php" class="btn btn-secondary">Clear</a>
                                 </div>
                             </div>
                         </form>

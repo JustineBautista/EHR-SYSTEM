@@ -14,12 +14,12 @@ if (!isset($_SESSION['admin'])) {
 }
 
 $page_title = "About Us";
-include "header.php";
+include "../includes/header.php";
 ?>
 
 <style>
     .hero-section {
-        background-image: url('IMAGES/about-image.png');
+        background-image: url('../assets/IMAGES/about-image.png');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -287,4 +287,4 @@ include "header.php";
     </div>
 </div>
 
-<?php include "footer.php"; ?>
+<?php include "../includes/footer.php"; ?>

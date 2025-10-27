@@ -1,5 +1,5 @@
 <?php
-echo '<link rel="icon" href="IMAGES/aurora.png" type="image/png">';
+echo '<link rel="icon" href="../assets/IMAGES/aurora.png" type="image/png">';
 ?>
 
 <?php
@@ -9,13 +9,13 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['admin'])) {
-    header("Location: index.php");
+    header("Location: ../pages/index.php");
     exit();
 }
 
 // Include required files AFTER session check
-include "db.php";
-include "audit_trail.php";
+include "../includes/db.php";
+include "../modules/audit_trail.php";
 
 $page_title = "Medical Summary";
 $msg = "";
@@ -25,7 +25,7 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-include "header.php";
+include "../includes/header.php";
 ?>
 
 <style>
@@ -587,4 +587,4 @@ function toggleRecords(btn) {
 </script>
 
 
-<?php include "footer.php"; ?>
+<?php include "../includes/footer.php"; ?>

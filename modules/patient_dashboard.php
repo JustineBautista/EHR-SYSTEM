@@ -1,5 +1,5 @@
 <?php
-echo '<link rel="icon" href="IMAGES/aurora.png" type="image/png">';
+echo '<link rel="icon" href="../assets/IMAGES/aurora.png" type="image/png">';
 ?>
 <?php
 // Start session and check authentication first
@@ -8,13 +8,13 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['admin'])) {
-    header("Location: index.php");
+    header("Location: ../pages/index.php");
     exit();
 }
 
 // Include required files AFTER session check
-include "db.php";
-include "audit_trail.php";
+include "../includes/db.php";
+include "../modules/audit_trail.php";
 
 // Function to sanitize input
 function sanitize_input($conn, $data) {
@@ -26,7 +26,7 @@ $page_title = "Patient Dashboard";
 // Get patient ID from URL
 $patient_id = intval($_GET['patient_id'] ?? 0);
 if ($patient_id <= 0) {
-    header("Location: patients.php");
+    header("Location: ../modules/patients.php");
     exit();
 }
 
@@ -44,7 +44,7 @@ if ($stmt && $stmt->bind_param("i", $patient_id) && $stmt->execute()) {
 }
 
 if (!$patient) {
-    header("Location: patients.php");
+    header("Location: ../modules/patients.php");
     exit();
 }
 
@@ -308,7 +308,7 @@ if (isset($_GET['delete_family_history'])) {
     $stmt = $conn->prepare("DELETE FROM family_history WHERE id=? AND patient_id=?");
     $stmt->bind_param("ii", $id, $patient_id);
     if ($stmt->execute()) {
-        header("Location: patient_dashboard.php?patient_id=$patient_id&section=family_history");
+        header("Location: ../modules/patient_dashboard.php?patient_id=$patient_id&section=family_history");
         exit();
     }
     $stmt->close();
@@ -497,7 +497,7 @@ if (isset($_GET['delete_vital'])) {
     $stmt = $conn->prepare("DELETE FROM vitals WHERE id=? AND patient_id=?");
     $stmt->bind_param("ii", $id, $patient_id);
     if ($stmt->execute()) {
-        header("Location: patient_dashboard.php?patient_id=$patient_id&section=vitals");
+        header("Location: ../modules/patient_dashboard.php?patient_id=$patient_id&section=vitals");
         exit();
     }
     $stmt->close();
@@ -637,7 +637,7 @@ if (isset($_GET['delete_med'])) {
     $stmt = $conn->prepare("DELETE FROM medications WHERE id=? AND patient_id=?");
     $stmt->bind_param("ii", $id, $patient_id);
     if ($stmt->execute()) {
-        header("Location: patient_dashboard.php?patient_id=$patient_id&section=medications");
+        header("Location: ../modules/patient_dashboard.php?patient_id=$patient_id&section=medications");
         exit();
     }
     $stmt->close();
@@ -1388,7 +1388,7 @@ if (isset($_GET['get_physical_assessment'])) {
     exit;
 }
 
-include "header.php";
+include "../includes/header.php";
 
 // Determine submitted section for JavaScript
 $submitted_section = '';
@@ -3555,4 +3555,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 </script>
 
-<?php include "footer.php"; ?>  
+<?php include "../includes/footer.php"; ?>  

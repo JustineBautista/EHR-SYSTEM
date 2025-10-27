@@ -1,6 +1,6 @@
 <?php
 session_start();
-include "db.php";
+include "../includes/db.php";
 
 // Clear the session_id in the database for the logged-in admin
 if (isset($_SESSION['admin_id'])) {

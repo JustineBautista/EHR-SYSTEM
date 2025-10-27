@@ -2,10 +2,10 @@
 // Set session cookie to persist for 30 days (86400 seconds * 30)
 session_set_cookie_params(900);
 session_start();
-include "db.php";
+include "../includes/db.php";
 
 if (isset($_SESSION['admin'])) {
-    header("Location: dashboard.php");
+    header("Location: ../pages/dashboard.php");
     exit();
 }
 
@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Set session and redirect
                 $_SESSION['admin'] = $username;
                 $_SESSION['admin_id'] = $user['id'];
-                header("Location: dashboard.php");
+                header("Location: ../pages/dashboard.php");
                 exit();
             } else {
                 $error = "Invalid username or password.";
@@ -68,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="IMAGES/aurora.png" type="image/png">
+  <link rel="icon" href="../assets/IMAGES/aurora.png" type="image/png">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=chevron_right" />
   <title>AURORA - EHR Admin Login</title>
   <style>
@@ -81,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       /*background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #e0e7ff 100%);*/
-      background:url("IMAGES/aurora_bg.png") center/cover no-repeat;
+      background:url("../assets/IMAGES/aurora_bg.png") center/cover no-repeat;
       display: flex;
       flex-direction: column;
       overflow: auto;
@@ -789,7 +789,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <header class="header">
     <div class="header-content">
       <div class="header-logo-wrapper">
-        <a href="https://olivarezcollegetagaytay.edu.ph/"><img src="IMAGES/OCT_LOGO.png" alt="Olivarez College Tagaytay Logo" class="header-logo oliv"></a>
+        <a href="https://olivarezcollegetagaytay.edu.ph/"><img src="../assets/IMAGES/OCT_LOGO.png" alt="Olivarez College Tagaytay Logo" class="header-logo oliv"></a>
       </div>
       <div class="header-text">
         <h1>OLIVAREZ COLLEGE TAGAYTAY</h1>
@@ -797,7 +797,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h2>College of Nursing and Health-Related Sciences</h2>
       </div>
       <div class="header-logo-wrapper">
-        <a href="https://olivarezcollegetagaytay.edu.ph/"><img src="IMAGES/NURSING_LOGO.png" alt="Nursing Department Logo" class="header-logo oliv"></a>
+        <a href="https://olivarezcollegetagaytay.edu.ph/"><img src="../assets/IMAGES/NURSING_LOGO.png" alt="Nursing Department Logo" class="header-logo oliv"></a>
       </div>
     </div>
   </header>
@@ -818,7 +818,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <div class="login-container">
       <button class="toggle-arrow left" id="toggle-mission"><i class="fa-solid fa-chevron-up"></i></button>
       <div class="login-card">
-        <img src="IMAGES/aurora.png" alt="Aurora Logo" class="login-logo">
+        <img src="../assets/IMAGES/aurora.png" alt="Aurora Logo" class="login-logo">
         <div class="login-title">
           <h2>Welcome Back</h2>
           <p>Please login to access the admin dashboard</p>

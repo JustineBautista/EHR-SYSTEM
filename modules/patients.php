@@ -5,13 +5,13 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (!isset($_SESSION['admin'])) {
-    header("Location: index.php");
+    header("Location: ../pages/index.php");
     exit();
 }
 
 // Include required files AFTER session check
-include "db.php";
-include "audit_trail.php";
+include "../includes/db.php";
+include "../modules/audit_trail.php";
 
 $page_title = "Patients Management";
 $msg = "";
@@ -24,7 +24,7 @@ if (!isset($_SESSION['csrf_token'])) {
 
 // Enhanced input sanitization function
 function sanitize_input($conn, $data) {
-    return trim($data);
+    return mysqli_real_escape_string($conn, trim(htmlspecialchars($data, ENT_QUOTES, 'UTF-8')));
 }
 
 // Validate date format
@@ -180,7 +180,7 @@ if (isset($_GET['edit'])) {
     }
 }
 
-include "header.php";
+include "../includes/header.php";
 ?>
 
 <style>
@@ -245,47 +245,47 @@ include "header.php";
                     <div class="col-md-6">
                         <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
                         <input class="form-control" id="name" name="name" placeholder="Full name" required maxlength="100"
-                               value="<?php echo $edit_patient ? htmlspecialchars(html_entity_decode($edit_patient['fullname'], ENT_QUOTES, 'UTF-8')) : ''; ?>">
+                               value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['fullname']) : ''; ?>">
                     </div>
 
                     <div class="col-md-3">
                         <label for="dob" class="form-label">Date of Birth</label>
                         <input class="form-control" id="dob" name="dob" type="date" max="<?php echo date('Y-m-d'); ?>"
-                               value="<?php echo $edit_patient ? htmlspecialchars(html_entity_decode($edit_patient['dob'], ENT_QUOTES, 'UTF-8')) : ''; ?>">
+                               value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['dob']) : ''; ?>">
                     </div>
 
                     <div class="col-md-3">
                         <label for="age" class="form-label">Age</label>
                         <input class="form-control" id="age" name="age" type="number" min="0" max="150"
-                               value="<?php echo $edit_patient ? htmlspecialchars(html_entity_decode($edit_patient['age'], ENT_QUOTES, 'UTF-8')) : ''; ?>">
+                               value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['age']) : ''; ?>">
                     </div>
 
                     <div class="col-md-3">
                         <label for="gender" class="form-label">Gender</label>
                         <select name="gender" id="gender" class="form-select">
                             <option value="">Select Gender</option>
-                            <option <?php echo (!$edit_patient || html_entity_decode($edit_patient['gender'], ENT_QUOTES, 'UTF-8')=='Male') ? 'selected':''; ?> value="Male">Male</option>
-                            <option <?php echo ($edit_patient && html_entity_decode($edit_patient['gender'], ENT_QUOTES, 'UTF-8')=='Female') ? 'selected':''; ?> value="Female">Female</option>
-                            <option <?php echo ($edit_patient && html_entity_decode($edit_patient['gender'], ENT_QUOTES, 'UTF-8')=='Other') ? 'selected':''; ?> value="Other">Other</option>
+                            <option <?php echo (!$edit_patient || $edit_patient['gender']=='Male') ? 'selected':''; ?> value="Male">Male</option>
+                            <option <?php echo ($edit_patient && $edit_patient['gender']=='Female') ? 'selected':''; ?> value="Female">Female</option>
+                            <option <?php echo ($edit_patient && $edit_patient['gender']=='Other') ? 'selected':''; ?> value="Other">Other</option>
                         </select>
                     </div>
 
                     <div class="col-md-4">
                         <label for="contact" class="form-label">Contact</label>
                         <input class="form-control" id="contact" name="contact" placeholder="Contact" maxlength="20"
-                               value="<?php echo $edit_patient ? htmlspecialchars(html_entity_decode($edit_patient['contact'], ENT_QUOTES, 'UTF-8')) : ''; ?>">
+                               value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['contact']) : ''; ?>">
                     </div>
 
                     <div class="col-md-8">
                         <label for="address" class="form-label">Address</label>
                         <input class="form-control" id="address" name="address" placeholder="Address" maxlength="500"
-                               value="<?php echo $edit_patient ? htmlspecialchars(html_entity_decode($edit_patient['address'], ENT_QUOTES, 'UTF-8')) : ''; ?>">
+                               value="<?php echo $edit_patient ? htmlspecialchars($edit_patient['address']) : ''; ?>">
                     </div>
 
                     <div class="col-12">
                         <label for="history" class="form-label">Medical History</label>
                         <textarea class="form-control" id="history" name="history" rows="3" maxlength="1000"
-                                  placeholder="Brief history"><?php echo $edit_patient ? htmlspecialchars(html_entity_decode($edit_patient['history'], ENT_QUOTES, 'UTF-8')) : ''; ?></textarea>
+                                  placeholder="Brief history"><?php echo $edit_patient ? htmlspecialchars($edit_patient['history']) : ''; ?></textarea>
                     </div>
                     
                     <div class="col-12 mt-3">
@@ -538,4 +538,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include "footer.php"; ?>
+<?php include "../includes/footer.php"; ?>

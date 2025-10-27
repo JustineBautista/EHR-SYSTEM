@@ -1,7 +1,7 @@
 <?php
 $page_title = "Lab & Diagnostic Results";
 // Include header (this already has session + db connection)
-include "header.php";
+include "../include/header.php";
 
 $search_query = isset($_GET['search_query']) ? trim($_GET['search_query']) : '';
 
@@ -216,4 +216,4 @@ if ($search_query !== '') {
     <?php endif; ?>
 </div>
 
-<?php include "footer.php"; ?>
+<?php include "../includes/footer.php"; ?>

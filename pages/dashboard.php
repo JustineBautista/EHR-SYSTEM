@@ -6,12 +6,12 @@ if (session_status() === PHP_SESSION_NONE) {
 $page_title = "Dashboard";
 $msg = "";
 
-include "db.php";
-include "audit_trail.php";
+include "../includes/db.php";
+include "../modules/audit_trail.php";
 
 // Check admin access
 if (!isset($_SESSION['admin'])) {
-    header("Location: index.php");
+    header("Location: ../pages/index.php");
     exit();
 }
 
@@ -101,7 +101,7 @@ foreach ($stats as $table => $value) {
     }
 }
 
-include "header.php";
+include "../includes/header.php";
 ?>
 
 <style>
@@ -665,7 +665,7 @@ include "header.php";
       </div>
       <h3 class="action-title">Add New Patient</h3>
     </div>
-    <a href="patients.php" class="action-card text-decoration-none">
+    <a href="../modules/patients.php" class="action-card text-decoration-none">
       <div class="action-icon">
         <i class="bi bi-people fs-4"></i>
       </div>
@@ -689,6 +689,99 @@ include "header.php";
     <div class="col-lg-4">
       <div class="chart-container">
         <canvas id="medicalDonutChart" style="max-height: 320px;"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient List Section -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="section-title">Patient List</h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="chart-container">
+        <!-- Search bar -->
+        <div class="mb-3">
+          <div class="input-group rounded" style="max-width: 400px;">
+            <input type="search" id="patientSearch" class="form-control rounded" placeholder="Search patient name or patient ID" aria-label="Search" aria-describedby="search-addon" />
+            <span class="input-group-text border-0" id="search-addon" style="background: transparent;">
+              <i class="bi bi-search"></i>
+            </span>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover" id="patientsTable">
+            <thead class="table-dark">
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Contact</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+            <?php
+            $res = $conn->query("SELECT * FROM patients ORDER BY fullname");
+            if ($res && $res->num_rows > 0):
+              while ($r = $res->fetch_assoc()):
+                // Fetch additional medical data with prepared statements
+                $medical_data = [];
+                $tables = ['medical_history', 'medications', 'vitals', 'diagnostics', 'treatment_plans', 'lab_results', 'progress_notes', 'physical_assessments'];
+
+                foreach ($tables as $table) {
+                  $stmt = $conn->prepare("SELECT * FROM `$table` WHERE patient_id = ?");
+                  if ($stmt && $stmt->bind_param("i", $r['id']) && $stmt->execute()) {
+                    $result = $stmt->get_result();
+                    $medical_data[$table] = [];
+                    while ($row = $result->fetch_assoc()) {
+                      $medical_data[$table][] = $row;
+                    }
+                    $stmt->close();
+                  }
+                }
+            ?>
+              <tr>
+                <td class="patient-id"><?php echo htmlspecialchars($r['id']); ?></td>
+                <td class="patient-name"><?php echo htmlspecialchars($r['fullname']); ?></td>
+                <td><?php echo htmlspecialchars($r['dob'] ?: 'N/A'); ?></td>
+                <td><?php echo htmlspecialchars($r['age'] ?: 'N/A'); ?></td>
+                <td><?php echo htmlspecialchars($r['gender'] ?: 'N/A'); ?></td>
+                <td><?php echo htmlspecialchars($r['contact'] ?: 'N/A'); ?></td>
+                <td>
+                  <div class="btn-group btn-group-sm" role="group">
+                    <a class="btn btn-outline-primary" href="../modules/patients.php?edit=<?php echo $r['id']; ?>" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#summaryModal"
+                            data-patient='<?php echo htmlspecialchars(json_encode(array_merge($r, $medical_data)), ENT_QUOTES); ?>' title="Summary">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <a class="btn btn-outline-danger"
+                       href="../modules/patients.php?delete=<?php echo $r['id']; ?>&csrf_token=<?php echo $_SESSION['csrf_token']; ?>"
+                       onclick="return confirm('Delete patient and all related records?')" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                    <a class="btn btn-outline-secondary" href="../modules/patient_dashboard.php?patient_id=<?php echo $r['id']; ?>" title="Record Vitals">Record</a>
+                  </div>
+                </td>
+              </tr>
+            <?php
+              endwhile;
+            else:
+            ?>
+              <tr>
+                <td colspan="7" class="text-center text-muted">No patients found.</td>
+              </tr>
+            <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -764,6 +857,34 @@ include "header.php";
       </form>
     </div>
   </div>
+</div>
+
+<!-- Summary Modal -->
+<div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="summaryModalLabel">
+                    <i class="bi bi-person-fill me-2"></i>Patient Demographics
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="personalInfo"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -968,7 +1089,107 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Patient Search Functionality
+    const patientSearch = document.getElementById('patientSearch');
+    const patientsTable = document.getElementById('patientsTable');
+    const tableRows = patientsTable.querySelectorAll('tbody tr');
+
+    patientSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+
+        tableRows.forEach(row => {
+            const patientId = row.querySelector('.patient-id').textContent.toLowerCase();
+            const patientName = row.querySelector('.patient-name').textContent.toLowerCase();
+
+            if (patientId.includes(searchTerm) || patientName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Summary Modal Handling
+    const summaryModal = document.getElementById('summaryModal');
+    summaryModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const patientData = JSON.parse(button.getAttribute('data-patient'));
+
+        const personalInfo = document.getElementById('personalInfo');
+        personalInfo.innerHTML = `
+            <h5 class="mb-3">Personal Information</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <strong>ID:</strong> ${patientData.id}
+                </div>
+                <div class="col-md-6">
+                    <strong>Name:</strong> ${patientData.fullname}
+                </div>
+                <div class="col-md-6">
+                    <strong>Date of Birth:</strong> ${patientData.dob || 'N/A'}
+                </div>
+                <div class="col-md-6">
+                    <strong>Age:</strong> ${patientData.age || 'N/A'}
+                </div>
+                <div class="col-md-6">
+                    <strong>Gender:</strong> ${patientData.gender || 'N/A'}
+                </div>
+                <div class="col-md-6">
+                    <strong>Contact:</strong> ${patientData.contact || 'N/A'}
+                </div>
+                <div class="col-12">
+                    <strong>Address:</strong> ${patientData.address || 'N/A'}
+                </div>
+                <div class="col-12">
+                    <strong>Medical History:</strong> ${patientData.history || 'N/A'}
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h5 class="mb-3">Medical Records Summary</h5>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="stat-icon mx-auto mb-2" style="width: 40px; height: 40px;">
+                            <i class="bi bi-journal-medical"></i>
+                        </div>
+                        <strong>${patientData.medical_history ? patientData.medical_history.length : 0}</strong><br>
+                        <small class="text-muted">Medical Histories</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="stat-icon mx-auto mb-2" style="width: 40px; height: 40px;">
+                            <i class="bi bi-capsule"></i>
+                        </div>
+                        <strong>${patientData.medications ? patientData.medications.length : 0}</strong><br>
+                        <small class="text-muted">Medications</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="stat-icon mx-auto mb-2" style="width: 40px; height: 40px;">
+                            <i class="bi bi-heart-pulse"></i>
+                        </div>
+                        <strong>${patientData.vitals ? patientData.vitals.length : 0}</strong><br>
+                        <small class="text-muted">Vital Records</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <div class="stat-icon mx-auto mb-2" style="width: 40px; height: 40px;">
+                            <i class="bi bi-clipboard-data"></i>
+                        </div>
+                        <strong>${patientData.lab_results ? patientData.lab_results.length : 0}</strong><br>
+                        <small class="text-muted">Lab Results</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
 });
 </script>
 
-<?php include "footer.php"; ?>
+<?php include "../includes/footer.php"; ?>
